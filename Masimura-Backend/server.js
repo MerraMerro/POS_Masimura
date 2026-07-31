@@ -1,0 +1,339 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
+require('dotenv').config();
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server jalan di port ${PORT}`));
+
+const cors = require('cors');
+app.use(cors());
+
+const app = express();
+
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeaders: ['Content-Type'] }));
+app.use(express.json());
+
+// 1. Jadikan folder 'public/uploads' dapat diakses secara publik lewat URL
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// 2. Storage Multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    // Penamaan file unik: timestamp-namaasli
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
+
+// Import Models
+const User = require('./models/User');
+const Menu = require('./models/Menu');
+const Stock = require('./models/Stock');
+const Transaction = require('./models/Transactions');
+const Category = require('./models/Category')
+const Employee = require('./models/Employee');
+
+// Import Routes
+const stockRoutes = require('./routes/stockRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+
+app.use('/api/stocks', stockRoutes);
+app.use('/api/transactions', transactionRoutes);
+
+app.post('/api/upload', upload.single('gambar'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
+  }
+  // Kembalikan URL gambar lokal
+  const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+  res.json({ imageUrl });
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username, password });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Username atau password salah!' });
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      nama: user.nama,
+      role: user.role
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Seed User Default di fn connectDB()
+async function seedUsers() {
+  const count = await User.countDocuments();
+  if (count === 0) {
+    await User.insertMany([
+      { username: 'admin', password: 'admin123', nama: 'Administrator', role: 'admin' },
+      { username: 'kasir', password: 'kasir123', nama: 'Kasir Masimura', role: 'kasir' }
+    ]);
+    console.log("🌱 Default User (Admin & Kasir) berhasil dibuat!");
+  }
+}
+
+// --- API CRUD KATEGORI ---
+// Get Kategori
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ createdAt: 1 });
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Tambah kategori
+app.post('/api/categories', async (req, res) => {
+  try {
+    const { namaKategori, deskripsi } = req.body;
+    const existing = await Category.findOne({ namaKategori });
+    if (existing) {
+      return res.status(400).json({ message: 'Kategori sudah ada' });
+    }
+    const newCategory = new Category({ namaKategori, deskripsi });
+    await newCategory.save();
+    res.status(201).json(newCategory);
+  } catch(err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Edit Kategori
+app.put('/api/categories/:id', async (req, res) =>{
+  try {
+    const updateCategory = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updateCategory);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Hapus Kategori
+app.delete('/api/categories/:id', async (req, res ) => {
+  try {
+    await Category.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Kategori berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// --- API CRUD MENU ---
+app.get('/api/menus', async (req, res) => {
+  try {
+    // 1. Gunakan .lean() agar data bisa dimodifikasi sebelum dikirim
+    const menus = await Menu.find().lean();
+    
+    // 2. Ambil semua data stok
+    const stocks = await Stock.find().lean();
+
+    // 3. Gabungkan sisaStok ke dalam resep menu
+    const menusWithStock = menus.map(menu => {
+      if (menu.resep && menu.resep.length > 0) {
+        menu.resep = menu.resep.map(bahanResep => {
+          // Cari berdasarkan _id stock atau namaBahan
+          const matchingStock = stocks.find(s => 
+            s._id.toString() === bahanResep.stockId?.toString() || 
+            s.namaBahan === bahanResep.namaBahan
+          );
+          
+          return {
+            ...bahanResep,
+            // Injeksi sisaStok di sini!
+            sisaStok: matchingStock ? matchingStock.sisaStok : 0 
+          };
+        });
+      }
+      return menu;
+    });
+
+    res.json(menusWithStock);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put('/api/menus/:id', async (req, res) => {
+  try {
+    const updatedMenu = await Menu.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedMenu);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+app.delete('/api/menus/:id', async (req, res) => {
+  try {
+    await Menu.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Menu berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- API DASHBOARD STATS ---
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ statusTransaksi: 'Selesai' });
+    const stocks = await Stock.find();
+    const totalProducts = await Menu.countDocuments();
+
+    const totalRevenue = transactions.reduce((sum, trx) => sum + (trx.totalHarga || 0), 0);
+    const lowStockCount = stocks.filter(s => (s.sisaStok || 0) <= 5).length;
+
+    res.json({
+      totalRevenue: totalRevenue || 0,
+      totalOrders: transactions.length || 0,
+      totalProducts: totalProducts || 0,
+      lowStockCount: lowStockCount || 0
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Endpoint Chart Analytics Dashboard
+app.get('/api/dashboard/analytics', async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ statusTransaksi: 'Selesai' });
+
+    // 1. Data Pendapatan Bulanan (Revenue Chart)
+    const monthlyRevenue = Array(12).fill(0);
+    const currentYear = new Date().getFullYear();
+
+    transactions.forEach(trx => {
+      const transactionDate = trx.waktuTransaksi || trx.createdAt;
+      if (transactionDate) {
+        const dateObj = new Date(transactionDate);
+        if (dateObj.getFullYear() === currentYear) {
+          const monthIndex = dateObj.getMonth();
+          monthlyRevenue[monthIndex] += (trx.totalHarga || 0);
+        }
+      }
+    });
+
+    const menus = await Menu.find();
+    const kamusKategori = {};
+    menus.forEach(m => {
+      kamusKategori[m.namaMenu] = m.kategori;
+    });
+
+    const categories = await Category.find();
+    const categoryCounts = {};
+    categories.forEach(cat => { categoryCounts[cat.namaKategori] = 0; });
+    
+    transactions.forEach(trx => {
+      if (Array.isArray(trx.items)) {
+        trx.items.forEach(item => {
+          const cat = item.kategori || kamusKategori[item.namaMenu] || 'Lainnya';  
+          
+          categoryCounts[cat] = (categoryCounts[cat] || 0) + (Number(item.kuantitas) || 1);
+        });
+      }
+    });
+
+    const totalItemsSold = Object.values(categoryCounts).reduce((a, b) => a + b, 0) || 1;
+    const categoryDistribution = Object.keys(categoryCounts).map(cat => ({
+      name: cat,
+      count: categoryCounts[cat],
+      percentage: Math.round((categoryCounts[cat] / totalItemsSold) * 100)
+    }));
+
+    res.json({
+      monthlyRevenue,
+      categoryDistribution
+    });
+  } catch (err) {
+    console.error("Error Dashboard Analytics:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- API CRUD KARYAWAN & GAJI ---
+app.get('/api/employees', async (req, res) => {
+  try {
+    const employees = await Employee.find().sort({ createdAt: -1 });
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/employees', async (req, res) => {
+  try {
+    const newEmployee = new Employee(req.body);
+    await newEmployee.save();
+    res.status(201).json(newEmployee);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+app.put('/api/employees/:id', async (req, res) => {
+  try {
+    const updatedEmployee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedEmployee);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+  try {
+    await Employee.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Karyawan berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Database Connection
+const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+
+async function connectDB() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, clientOptions);
+    console.log("Terhubung ke MongoDB Atlas!");
+
+    // 1. Jalankan Seed User Default
+    await seedUsers(); 
+
+    // 2. Seed Category Default
+    const count = await Category.countDocuments();
+    if (count === 0) {
+      await Category.insertMany([
+        { namaKategori: 'East Side', deskripsi: 'Hidangan makanan khas timur' },
+        { namaKategori: 'West Side', deskripsi: 'Hidangan makanan khas barat' },
+        { namaKategori: 'Drinks', deskripsi: 'Minuman segar dan Kopi' }
+      ]);
+      console.log("🌱 Default Category berhasil dibuat!");
+    }
+  } catch (err) {
+    console.error("Gagal terhubung:", err.message);
+  }
+}
+
+
+connectDB();
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server Back-end berjalan di http://localhost:${PORT}`);
+});
