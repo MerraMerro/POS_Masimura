@@ -5,57 +5,56 @@ const path = require('path');
 const multer = require('multer');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server jalan di port ${PORT}`));
-
-const cors = require('cors');
-app.use(cors());
-
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeaders: ['Content-Type'] }));
+// --- Middleware ---
+app.use(cors({ 
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+    allowedHeaders: ['Content-Type'] 
+}));
 app.use(express.json());
 
 // 1. Jadikan folder 'public/uploads' dapat diakses secara publik lewat URL
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-// 2. Storage Multer
+// 2. Storage Multer (Upload Gambar)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'public/uploads/');
   },
   filename: (req, file, cb) => {
-    // Penamaan file unik: timestamp-namaasli
     cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
-
 const upload = multer({ storage });
 
-// Import Models
+// --- Import Models ---
 const User = require('./models/User');
 const Menu = require('./models/Menu');
 const Stock = require('./models/Stock');
 const Transaction = require('./models/Transactions');
-const Category = require('./models/Category')
+const Category = require('./models/Category');
 const Employee = require('./models/Employee');
 
-// Import Routes
+// --- Import & Gunakan Routes Terpisah ---
 const stockRoutes = require('./routes/stockRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
 
+// --- API UPLOAD GAMBAR ---
 app.post('/api/upload', upload.single('gambar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
   }
-  // Kembalikan URL gambar lokal
   const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
   res.json({ imageUrl });
 });
 
+// --- API LOGIN ---
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -76,7 +75,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Seed User Default di fn connectDB()
+// --- Seed User Default ---
 async function seedUsers() {
   const count = await User.countDocuments();
   if (count === 0) {
@@ -89,7 +88,6 @@ async function seedUsers() {
 }
 
 // --- API CRUD KATEGORI ---
-// Get Kategori
 app.get('/api/categories', async (req, res) => {
   try {
     const categories = await Category.find().sort({ createdAt: 1 });
@@ -99,7 +97,6 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// Tambah kategori
 app.post('/api/categories', async (req, res) => {
   try {
     const { namaKategori, deskripsi } = req.body;
@@ -115,7 +112,6 @@ app.post('/api/categories', async (req, res) => {
   }
 });
 
-// Edit Kategori
 app.put('/api/categories/:id', async (req, res) =>{
   try {
     const updateCategory = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -125,30 +121,24 @@ app.put('/api/categories/:id', async (req, res) =>{
   }
 });
 
-// Hapus Kategori
-app.delete('/api/categories/:id', async (req, res ) => {
+app.delete('/api/categories/:id', async (req, res) => {
   try {
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: 'Kategori berhasil dihapus' });
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    res.status(500).json({ message: err.message });
   }
-})
+});
 
 // --- API CRUD MENU ---
 app.get('/api/menus', async (req, res) => {
   try {
-    // 1. Gunakan .lean() agar data bisa dimodifikasi sebelum dikirim
     const menus = await Menu.find().lean();
-    
-    // 2. Ambil semua data stok
     const stocks = await Stock.find().lean();
 
-    // 3. Gabungkan sisaStok ke dalam resep menu
     const menusWithStock = menus.map(menu => {
       if (menu.resep && menu.resep.length > 0) {
         menu.resep = menu.resep.map(bahanResep => {
-          // Cari berdasarkan _id stock atau namaBahan
           const matchingStock = stocks.find(s => 
             s._id.toString() === bahanResep.stockId?.toString() || 
             s.namaBahan === bahanResep.namaBahan
@@ -156,7 +146,6 @@ app.get('/api/menus', async (req, res) => {
           
           return {
             ...bahanResep,
-            // Injeksi sisaStok di sini!
             sisaStok: matchingStock ? matchingStock.sisaStok : 0 
           };
         });
@@ -209,12 +198,11 @@ app.get('/api/dashboard/stats', async (req, res) => {
   }
 });
 
-// Endpoint Chart Analytics Dashboard
+// --- Endpoint Chart Analytics Dashboard ---
 app.get('/api/dashboard/analytics', async (req, res) => {
   try {
     const transactions = await Transaction.find({ statusTransaksi: 'Selesai' });
 
-    // 1. Data Pendapatan Bulanan (Revenue Chart)
     const monthlyRevenue = Array(12).fill(0);
     const currentYear = new Date().getFullYear();
 
@@ -243,7 +231,6 @@ app.get('/api/dashboard/analytics', async (req, res) => {
       if (Array.isArray(trx.items)) {
         trx.items.forEach(item => {
           const cat = item.kategori || kamusKategori[item.namaMenu] || 'Lainnya';  
-          
           categoryCounts[cat] = (categoryCounts[cat] || 0) + (Number(item.kuantitas) || 1);
         });
       }
@@ -304,7 +291,12 @@ app.delete('/api/employees/:id', async (req, res) => {
   }
 });
 
-// Database Connection
+// --- Root Test Endpoint ---
+app.get('/', (req, res) => {
+    res.send('API Masimura POS Berjalan!');
+});
+
+// --- Database Connection & Server Listener ---
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
 
 async function connectDB() {
@@ -330,10 +322,8 @@ async function connectDB() {
   }
 }
 
-
 connectDB();
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server Back-end berjalan di http://localhost:${PORT}`);
+  console.log(`🚀 Server Back-end berjalan di http://localhost:${PORT}`);
 });
