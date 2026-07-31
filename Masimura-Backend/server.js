@@ -6,7 +6,10 @@ const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.set('trust proxy', 1);
 
 // --- Middleware ---
 app.use(cors({ 
@@ -19,10 +22,9 @@ app.use(express.json());
 // 1. Jadikan folder 'public/uploads' dapat diakses secara publik lewat URL
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-// 2. Storage Multer (Upload Gambar)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
+    cb(null, path.join(__dirname, 'public', 'uploads'));
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
