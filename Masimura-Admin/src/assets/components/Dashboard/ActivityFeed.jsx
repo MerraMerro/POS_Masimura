@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Clock, ShoppingCart, AlertTriangle, Utensils, UserPlus } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function ActivityFeed() {
     const [activities, setActivities] = useState([])
@@ -8,10 +9,10 @@ export default function ActivityFeed() {
     useEffect(() => {
         // 1. Ambil SEMUA data (Transaksi, Stok, Menu, Karyawan) secara bersamaan
         Promise.all([
-            fetch('http://localhost:5000/api/transactions').then(res => res.json()),
-            fetch('http://localhost:5000/api/stocks').then(res => res.json()),
-            fetch('http://localhost:5000/api/menus').then(res => res.json()),
-            fetch('http://localhost:5000/api/employees').then(res => res.json())
+            fetch(`${API_URL}/api/transactions`).then(res => res.json()),
+            fetch(`${API_URL}/api/stocks`).then(res => res.json()),
+            fetch(`${API_URL}/api/menus`).then(res => res.json()),
+            fetch(`${API_URL}/api/employees`).then(res => res.json())
         ])
         .then(([txData, stockData, menuData, empData]) => {
             const feed = []

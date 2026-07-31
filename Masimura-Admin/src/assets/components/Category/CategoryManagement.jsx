@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Search, Layers, X } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([])
@@ -18,7 +19,7 @@ export default function CategoryManagement() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories')
+      const res = await fetch(`${API_URL}/api/categories`)
       const data = await res.json()
       setCategories(data)
     } catch (err) {
@@ -46,8 +47,8 @@ export default function CategoryManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const url = editingId
-      ? `http://localhost:5000/api/categories/${editingId}`
-      : 'http://localhost:5000/api/categories'
+      ? `${API_URL}/api/categories/${editingId}`
+      : `${API_URL}/api/categories`
     const method = editingId ? 'PUT' : 'POST'
 
     try {
@@ -72,7 +73,7 @@ export default function CategoryManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus kategori ini?')) return
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_URL}/api/categories/${id}`, { method: 'DELETE' })
       if (res.ok) fetchCategories()
     } catch (err) {
       console.error('Gagal menghapus kategori:', err)

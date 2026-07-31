@@ -4,6 +4,7 @@ import {
   CreditCard, Printer, User, X, Banknote, 
   QrCode, Clock, CheckCircle2, XCircle 
 } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function PosPage() {
   const [menus, setMenus] = useState([])
@@ -28,7 +29,7 @@ export default function PosPage() {
 
   const fetchMenus = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/menus')
+      const res = await fetch(`${API_URL}/api/menus`)
       const data = await res.json()
       setMenus(data)
     } catch (err) {
@@ -38,7 +39,7 @@ export default function PosPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories')
+      const res = await fetch(`${API_URL}/api/categories`)
       const data = await res.json()
       setCategories(data)
     } catch (err) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { API_URL } from '../../../config/api'
 
 export default function SalesChart() {
   const [data, setData] = useState([
@@ -9,7 +10,7 @@ export default function SalesChart() {
   ])
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard/analytics')
+    fetch(`${API_URL}/api/dashboard/analytics`)
       .then((res) => res.json())
       .then((resData) => {
         if (resData.categoryDistribution) {

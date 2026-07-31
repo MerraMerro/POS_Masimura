@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Edit2, Search, Trash2, X, Users, Briefcase, DollarSign, UserCheck, UserX } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([])
@@ -27,7 +28,7 @@ export default function EmployeeManagement() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/employees')
+      const res = await fetch(`${API_URL}/api/employees`)
       const data = await res.json()
       setEmployees(data)
     } catch (err) {
@@ -62,8 +63,8 @@ export default function EmployeeManagement() {
     setIsProcessing(true)
 
     const url = editingId 
-      ? `http://localhost:5000/api/employees/${editingId}`
-      : 'http://localhost:5000/api/employees'
+      ? `${API_URL}/api/employees/${editingId}`
+      : `${API_URL}/api/employees`
     const method = editingId ? 'PUT' : 'POST'
 
     try {
@@ -90,7 +91,7 @@ export default function EmployeeManagement() {
   const handleDelete = async (id, nama) => {
     if (!window.confirm(`Yakin ingin menghapus data karyawan ${nama}? (Aksi ini tidak bisa dibatalkan)`)) return
     try {
-      const res = await fetch(`http://localhost:5000/api/employees/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_URL}/api/employees/${id}`, { method: 'DELETE' })
       if (res.ok) fetchEmployees()
     } catch (err) {
       console.error('Gagal menghapus karyawan:', err)

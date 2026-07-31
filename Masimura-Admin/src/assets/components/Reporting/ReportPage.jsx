@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Calendar, Users, ShoppingBag } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function ReportPage() {
     const [transactions, setTransactions] = useState([])
@@ -17,8 +18,8 @@ export default function ReportPage() {
 
     useEffect(() => {
         Promise.all([
-            fetch('http://localhost:5000/api/transactions').then(res => res.json()),
-            fetch('http://localhost:5000/api/employees').then(res => res.json())
+            fetch(`${API_URL}/api/transactions`).then(res => res.json()),
+            fetch(`${API_URL}/api/employees`).then(res => res.json())
         ])
         .then(([txData, empData]) => {
             setTransactions(Array.isArray(txData) ? txData : [])

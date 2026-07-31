@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { API_URL } from '../../../config/api'
 
 export default function RevenueChart() {
   const [monthlyData, setMonthlyData] = useState(Array(12).fill(0))
@@ -8,7 +9,7 @@ export default function RevenueChart() {
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard/analytics')
+    fetch(`${API_URL}/api/dashboard/analytics`)
       .then(res => res.json())
       .then(data => {
         if (data.monthlyRevenue) setMonthlyData(data.monthlyRevenue)

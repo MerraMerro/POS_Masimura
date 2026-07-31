@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { MoreHorizontal, TrendingDown, TrendingUp, Download } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function TableSection() {
     const [recentOrders, setRecentOrders] = useState([])
@@ -8,7 +9,7 @@ export default function TableSection() {
 
     useEffect(() => {
         // Mengambil data dari endpoint backend Masimura POS
-        fetch('http://localhost:5000/api/transactions')
+        fetch(`${API_URL}/api/transactions`)
             .then(res => res.json())
             .then(data => {
                 // 1. OLAH DATA PESANAN TERBARU (5 Transaksi Terakhir)
@@ -96,7 +97,7 @@ export default function TableSection() {
     // --- FUNGSI DOWNLOAD CSV ---
     const handleDownloadReport = () => {
         // Ambil SEMUA data transaksi (bukan cuma 5 terbaru) dari backend
-        fetch('http://localhost:5000/api/transactions')
+        fetch(`${API_URL}/api/transactions`)
         .then(res => res.json())
         .then(data => {
             // 1. Buat Header Kolom CSV

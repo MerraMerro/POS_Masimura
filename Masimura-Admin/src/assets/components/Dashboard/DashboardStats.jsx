@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { DollarSign, ShoppingBag, Utensils, AlertOctagon } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function DashboardStats() {
     const [stats, setStats] = useState({
@@ -10,7 +11,7 @@ export default function DashboardStats() {
     })
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/dashboard/stats')
+        fetch(`${API_URL}/api/dashboard/stats`)
             .then(res => res.json())
             .then(data => setStats(data))
             .catch(err => console.error('Gagal mengambil data stats dashboard:', err))

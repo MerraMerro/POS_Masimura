@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { CreditCard, Search, Calendar, FileText, ArrowLeftRight, Edit2, X } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function TransactionManagement() {
   const [transactions, setTransactions] = useState([])
@@ -21,7 +22,7 @@ export default function TransactionManagement() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/transactions')
+      const res = await fetch(`${API_URL}/api/transactions`)
       const data = await res.json()
       // Mengurutkan transaksi dari yang paling baru
       const sortedData = data.sort((a, b) => new Date(b.waktuTransaksi || b.createdAt) - new Date(a.waktuTransaksi || a.createdAt))
@@ -59,7 +60,7 @@ export default function TransactionManagement() {
     setIsProcessing(true)
 
     try {
-      const res = await fetch(`http://localhost:5000/api/transactions/${editingId}`, {
+      const res = await fetch(`${API_URL}/api/transactions/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

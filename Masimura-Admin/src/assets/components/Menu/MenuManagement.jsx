@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Plus, Edit2, Search, Trash2, X, Image as ImageIcon, PlusCircle } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function MenuManagement() {
   const [menus, setMenus] = useState([])
@@ -38,9 +39,9 @@ export default function MenuManagement() {
   const fetchData = async () => {
     try {
       const [resMenus, resCat, resStocks] = await Promise.all([
-        fetch('http://localhost:5000/api/menus'),
-        fetch('http://localhost:5000/api/categories'),
-        fetch('http://localhost:5000/api/stocks')
+        fetch(`${API_URL}/api/menus`),
+        fetch(`${API_URL}/api/categories`),
+        fetch(`${API_URL}/api/stocks`)
       ])
       
       setMenus(await resMenus.json())
@@ -134,7 +135,7 @@ export default function MenuManagement() {
         const imageFormData = new FormData()
         imageFormData.append('gambar', selectedFile)
 
-        const uploadRes = await fetch('http://localhost:5000/api/upload', {
+        const uploadRes = await fetch(`${API_URL}/api/upload`, {
           method: 'POST',
           body: imageFormData
         })
@@ -155,8 +156,8 @@ export default function MenuManagement() {
       }
 
       const url = editingId 
-        ? `http://localhost:5000/api/menus/${editingId}`
-        : 'http://localhost:5000/api/menus'
+        ? `${API_URL}/api/menus/${editingId}`
+        : `${API_URL}/api/menus`
       const method = editingId ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
@@ -183,7 +184,7 @@ export default function MenuManagement() {
   const handleDelete = async (id, nama) => {
     if (!window.confirm(`Yakin ingin menghapus menu ${nama}?`)) return
     try {
-      const res = await fetch(`http://localhost:5000/api/menus/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_URL}/api/menus/${id}`, { method: 'DELETE' })
       if (res.ok) fetchData()
     } catch (err) {
       console.error('Gagal menghapus menu:', err)

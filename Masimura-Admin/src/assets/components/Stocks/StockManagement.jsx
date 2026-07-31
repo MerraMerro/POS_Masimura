@@ -10,6 +10,7 @@ import {
   Trash2, 
   PlusCircle 
 } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function StockManagement() {
   const [stocks, setStocks] = useState([])
@@ -36,7 +37,7 @@ export default function StockManagement() {
 
   const fetchStocks = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/stocks')
+      const res = await fetch(`${API_URL}/api/stocks`)
       const data = await res.json()
       setStocks(data)
     } catch (err) {
@@ -67,8 +68,8 @@ export default function StockManagement() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const url = editingId 
-      ? `http://localhost:5000/api/stocks/${editingId}`
-      : 'http://localhost:5000/api/stocks'
+      ? `${API_URL}/api/stocks/${editingId}`
+      : `${API_URL}/api/stocks`
     const method = editingId ? 'PUT' : 'POST'
 
     // Jika membuat bahan baru, kirim sisaStok (serta stokAwal dummy agar tidak error di DB lama)
@@ -116,7 +117,7 @@ export default function StockManagement() {
     const newStok = Number(restockData.currentStok) + Number(restockData.addAmount)
     
     try {
-      const res = await fetch(`http://localhost:5000/api/stocks/${restockData.id}`, {
+      const res = await fetch(`${API_URL}/api/stocks/${restockData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sisaStok: newStok }) // Hanya update sisa stoknya
@@ -136,7 +137,7 @@ export default function StockManagement() {
     if (!window.confirm(`Yakin ingin menghapus ${nama} secara permanen?`)) return
 
     try {
-      const res = await fetch(`http://localhost:5000/api/stocks/${id}`, {
+      const res = await fetch(`${API_URL}/api/stocks/${id}`, {
         method: 'DELETE'
       })
       if (res.ok) fetchStocks()

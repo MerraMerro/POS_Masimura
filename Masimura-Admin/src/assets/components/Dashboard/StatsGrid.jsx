@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { DollarSign, ShoppingCart, Package, AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { API_URL } from '../../../config/api'
 
 export default function StatsGrid() {
   const [statsData, setStatsData] = useState({
@@ -10,7 +11,7 @@ export default function StatsGrid() {
   })
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard/stats')
+    fetch(`${API_URL}/api/dashboard/stats`)
       .then(res => res.json())
       .then(data => setStatsData(data))
       .catch(err => console.error('Gagal memuat statistik:', err))
