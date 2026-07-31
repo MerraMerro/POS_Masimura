@@ -64,8 +64,6 @@ export default function PosPage() {
     if (targetResep && targetResep.length > 0) {
       targetResep.forEach(b => {
         const totalDibutuhkan = (usageMap[b.namaBahan] || 0) + (Number(b.kuantitas) * intendedQty);
-        
-        // PERBAIKAN: Jika sisaStok undefined/kosong, anggap saja 0
         const stokTersedia = b.sisaStok !== undefined && b.sisaStok !== null ? Number(b.sisaStok) : 0;
         
         if (totalDibutuhkan > stokTersedia) {
@@ -85,15 +83,13 @@ export default function PosPage() {
     return true;
   }
 
-  // --- Kelola Keranjang (DIUBAH) ---
   const addToCart = (menu) => {
     setCart((prevCart) => {
       const exist = prevCart.find((item) => item.menuId === menu._id);
       const intendedQty = exist ? exist.kuantitas + 1 : 1;
 
-      // BLOKIR JIKA STOK TIDAK CUKUP
       if (!checkStockCapacity(menu._id, menu.resep, intendedQty, prevCart)) {
-        return prevCart; // Batal masuk keranjang
+        return prevCart;
       }
 
       if (exist) {
@@ -110,13 +106,12 @@ export default function PosPage() {
           kategori: menu.kategori,
           harga: menu.harga,
           kuantitas: 1,
-          resep: menu.resep // Wajib menyimpan resep agar tombol + di keranjang bisa dicek
+          resep: menu.resep
         }
       ];
     });
   }
 
-  // --- Update Quantity di Keranjang (DIUBAH) ---
   const updateQuantity = (menuId, delta) => {
     setCart((prevCart) => {
       const exist = prevCart.find((item) => item.menuId === menuId);
@@ -124,15 +119,13 @@ export default function PosPage() {
 
       const newQty = exist.kuantitas + delta;
 
-      // Jika tombol minus ditekan, izinkan langsung tanpa cek stok
       if (delta < 0) {
         if (newQty <= 0) return prevCart.filter(item => item.menuId !== menuId);
         return prevCart.map(item => item.menuId === menuId ? { ...item, kuantitas: newQty } : item);
       }
 
-      // Jika tombol PLUS (+) ditekan, WAJIB CEK STOK
       if (!checkStockCapacity(menuId, exist.resep, newQty, prevCart)) {
-        return prevCart; // Batal tambah kuantitas
+        return prevCart;
       }
 
       return prevCart.map(item => item.menuId === menuId ? { ...item, kuantitas: newQty } : item);
@@ -143,7 +136,6 @@ export default function PosPage() {
     setCart((prevCart) => prevCart.filter((item) => item.menuId !== menuId))
   }
   
-  // --- Format & Parse Ribuan ---
   const formatRibuan = (value) => {
     if (!value) return ''
     const cleanNumber = value.toString().replace(/\D/g, '')
@@ -155,40 +147,35 @@ export default function PosPage() {
     return Number(value.toString().replace(/\./g, ''))
   }
 
-  // Calculated properties
-  // (PERBAIKAN: Menggunakan item.harga dan item.kuantitas sesuai struktur addToCart)
   const totalHarga = cart.reduce((total, item) => total + (item.harga * item.kuantitas), 0)
   const nominalBayarAngka = parseAngka(nominalBayar)
   const kembalian = nominalBayarAngka >= totalHarga ? nominalBayarAngka - totalHarga : 0
 
-  // --- Logika Aksi Transaksi ---
   const handleProcessTransaction = () => {
     if (cart.length === 0) return alert('Keranjang belanja masih kosong!')
 
     if (paymentMethod === 'tunai') {
       if (nominalBayarAngka < totalHarga) return alert('Nominal pembayaran tunai kurang!')
-      handleCheckout() // Langsung proses API jika tunai valid
+      handleCheckout() 
     } else if (paymentMethod === 'qris') {
-      setNominalBayar(formatRibuan(totalHarga)) // Set nominal otomatis sesuai total tagihan
-      setTransactionStatus('pending') // Pindah ke layar QRIS
+      setNominalBayar(formatRibuan(totalHarga)) 
+      setTransactionStatus('pending') 
     }
   }
 
   const handleVerifyQris = (isSuccess) => {
     if (isSuccess) {
-      handleCheckout() // Uang masuk, langsung eksekusi API
+      handleCheckout() 
     } else {
-      setTransactionStatus('idle') // Batal, kembali ke keranjang
+      setTransactionStatus('idle') 
       setNominalBayar('')
     }
   }
 
-  // --- Simpan Transaksi ke Backend ---
   const handleCheckout = async () => {
     setIsProcessing(true)
     const nomorStruk = `STRUK-${Date.now()}`
     
-    // Pastikan nominal final akurat (QRIS selalu pas dengan total, Tunai sesuai input)
     const finalNominal = paymentMethod === 'qris' ? totalHarga : nominalBayarAngka;
     const finalKembalian = paymentMethod === 'qris' ? 0 : kembalian;
 
@@ -199,11 +186,12 @@ export default function PosPage() {
       totalHarga,
       nominalBayar: finalNominal,
       kembalian: finalKembalian,
-      metodePembayaran: paymentMethod // (Opsional) Mengirim data metode bayar ke DB
+      metodePembayaran: paymentMethod
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/transactions', {
+      // PERBAIKAN: Menggunakan API_URL dari config, bukan hardcode localhost
+      const res = await fetch(`${API_URL}/api/transactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -212,7 +200,7 @@ export default function PosPage() {
       const data = await res.json()
 
       if (res.ok) {
-        setLastTransaction(data.transaction) // Tampilkan modal struk
+        setLastTransaction(data.transaction) 
       } else {
         alert(data.message || 'Gagal memproses transaksi')
       }
@@ -224,7 +212,6 @@ export default function PosPage() {
     }
   }
 
-  // --- Reset Form Setelah Tutup Struk ---
   const resetAfterSuccess = () => {
     setLastTransaction(null)
     setCart([])
@@ -245,8 +232,7 @@ export default function PosPage() {
       
       {/* ================= KOLOM KIRI: KATALOG MENU ================= */}
       <div className="lg:col-span-2 flex flex-col space-y-4 overflow-y-auto pr-2">
-        {/* Filter Search & Kategori */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 space-y-4 shrink-0">
+        <div className="bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 space-y-4 shrink-0">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -285,19 +271,12 @@ export default function PosPage() {
           </div>
         </div>
 
-        {/* Grid Kartu Menu */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pb-6">
           {filteredMenus.map((menu) => {
-
-            // Cek isi data di Inspect Element (Console)
-            console.log("Data Menu:", menu);
-            
-            // PERBAIKAN: Tangani nilai undefined menjadi 0
             const isHabis = menu.resep && menu.resep.some(item => {
-            const stokTersedia = item.sisaStok !== undefined && item.sisaStok !== null ? Number(item.sisaStok) : 0;
-            // UBAH item.jumlah MENJADI item.kuantitas
-            return stokTersedia < Number(item.kuantitas); 
-          });
+              const stokTersedia = item.sisaStok !== undefined && item.sisaStok !== null ? Number(item.sisaStok) : 0;
+              return stokTersedia < Number(item.kuantitas); 
+            });
 
             return (
               <div
@@ -310,8 +289,6 @@ export default function PosPage() {
                 }`}
               >
                 <div className="w-full h-28 bg-slate-100 dark:bg-slate-800 rounded-xl mb-3 overflow-hidden border border-slate-200/50 dark:border-slate-700/50 relative">
-                  
-                  {/* Badge Label "HABIS" jika stok kosong */}
                   {isHabis && (
                     <div className="absolute inset-0 bg-slate-900/40 z-10 flex items-center justify-center backdrop-blur-sm">
                       <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -363,7 +340,6 @@ export default function PosPage() {
       {/* ================= KOLOM KANAN: PANEL TRANSAKSI ================= */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 flex flex-col justify-between h-full shrink-0 shadow-sm">
         
-        {/* === TAMPILAN IDLE (KERANJANG & INPUT) === */}
         {transactionStatus === 'idle' && (
           <>
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -438,7 +414,6 @@ export default function PosPage() {
             </div>
 
             <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3 shrink-0 mt-4">
-              {/* Tombol Pemilihan Metode Pembayaran */}
               <div className="grid grid-cols-2 gap-3 mb-2">
                 <button 
                   onClick={() => setPaymentMethod('tunai')}
@@ -464,7 +439,6 @@ export default function PosPage() {
                 </button>
               </div>
 
-              {/* Form Input Khusus Tunai */}
               {paymentMethod === 'tunai' && (
                 <div>
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
@@ -505,7 +479,6 @@ export default function PosPage() {
           </>
         )}
 
-        {/* === TAMPILAN PENDING (QRIS) === */}
         {transactionStatus === 'pending' && (
           <div className="flex flex-col items-center justify-center h-full space-y-6 text-center animate-in fade-in duration-300">
             <div className="w-20 h-20 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center animate-pulse">
@@ -523,7 +496,8 @@ export default function PosPage() {
             </div>
 
             <div className="p-4 bg-white rounded-xl border-2 border-dashed border-slate-200">
-              <img src="../public/qr_pembayaran.jpeg" alt="qris" className='w-32 h-32'/>
+              {/* PERBAIKAN: Menggunakan path root absolut /qr_pembayaran.jpeg */}
+              <img src="/qr_pembayaran.jpeg" alt="qris" className='w-32 h-32'/>
             </div>
 
             <div className="w-full space-y-3 mt-auto pt-6">
@@ -586,7 +560,6 @@ export default function PosPage() {
             }
           `}} />
 
-          {/* Kotak Struk */}
           <div id="nota-cetak" className="bg-white text-slate-800 rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl relative animate-in zoom-in duration-200">
             <button
               onClick={resetAfterSuccess}

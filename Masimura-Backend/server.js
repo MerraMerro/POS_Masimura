@@ -50,7 +50,11 @@ app.post('/api/upload', upload.single('gambar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
   }
-  const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+  
+  // Menggunakan protocol (http/https) dan host yang sedang aktif (mendukung Railway & Localhost)
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+  
   res.json({ imageUrl });
 });
 
