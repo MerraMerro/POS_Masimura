@@ -1,6 +1,7 @@
 import { Bell, ChevronDown, Filter, Menu, Search, Settings, Sun, Moon } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom' 
+import ProfileImg from '../../../../public/qr_pembayaran.jpeg'
 
 function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
     
@@ -108,7 +109,7 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
                     </button>
 
                     <div className='flex items-center space-x-3 pl-3 border-l border-slate-200 dark:border-slate-700'>
-                        <img src="./src/assets/images.jpg" alt="User" className='w-8 h-8 rounded-full ring-2 ring-blue-500'/>
+                        <img src={ProfileImg} alt="User" className='w-8 h-8 rounded-full ring-2 ring-blue-500'/>
                         <div className='hidden md:block'>
                             <p className='text-sm font-medium text-slate-500 dark:text-slate-400'>John Doe</p>
                             <p className='text-xs text-slate-500 dark:text-slate-400'>Admin</p>

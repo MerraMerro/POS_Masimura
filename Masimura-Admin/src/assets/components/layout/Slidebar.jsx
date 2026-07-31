@@ -14,6 +14,7 @@ import {
   User,
   FileText
 } from 'lucide-react'
+import Logo from '../../../../public/logo.jpeg'
 
 // MenuItems disesuaikan dengan Path & Fitur Masimura POS
 const menuItems = [
@@ -93,7 +94,7 @@ function Slidebar({ collapsed, currentUser, onLogout }) {
       {/* Header Logo */}
       <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50'>
         <div className='flex items-center space-x-3'>
-          <img src="../public/logo.jpeg" alt="Logo" className='w-10 h-10 bg-linear-to-r rounded-xl flex items-center justify-center shadow-lg shrink-0'/>
+          <img src={Logo} alt="Logo" className='w-10 h-10 bg-linear-to-r rounded-xl flex items-center justify-center shadow-lg shrink-0'/>
 
           {!collapsed && (
             <div>
