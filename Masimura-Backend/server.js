@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 const app = express();
@@ -18,37 +20,26 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 1. Jadikan folder 'public/uploads' dapat diakses secara publik lewat URL
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// --- Konfigurasi Cloudinary ---
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// 2. Storage Multer (Upload Gambar yang Mendukung .webp, .jpg, .png)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public', 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
+// Konfigurasi Storage Multer ke Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'masimura_pos',
+    allowed_formats: ['jpeg', 'jpg', 'png', 'webp', 'avif'],
+    public_id: (req, file) => `${Date.now()}-${file.originalname.split('.')[0]}`
   }
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp|avif/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Hanya boleh mengunggah file gambar (JPG, JPEG, PNG, WEBP)!'));
-  }
-};
-
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Batas max 5MB
-  fileFilter: fileFilter
+  limits: { fileSize: 5 * 1024 * 1024 } // Batas max 5MB
 });
 
 // --- Import Models ---
@@ -66,14 +57,18 @@ const transactionRoutes = require('./routes/transactionRoutes');
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// --- API UPLOAD GAMBAR (Wajib Ada agar Upload Tidak Error) ---
+// --- API UPLOAD GAMBAR KE CLOUDINARY ---
 app.post('/api/upload', upload.single('gambar'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
+    }
+    // Mengembalikan URL publik permanen dari Cloudinary
+    res.json({ imageUrl: req.file.path });
+  } catch (err) {
+    console.error("Error Upload Cloudinary:", err);
+    res.status(500).json({ message: err.message });
   }
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
-  const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
-  res.json({ imageUrl });
 });
 
 // --- API LOGIN ---
