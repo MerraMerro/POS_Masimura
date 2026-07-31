@@ -23,7 +23,7 @@ const menuItems = [
     icon: ShoppingBag,
     label: 'POS Kasir',
     path: '/pos',
-    role: 'all', // Kasir & Admin
+    role: 'kasir',
     badge: 'Live',
   },
   {
