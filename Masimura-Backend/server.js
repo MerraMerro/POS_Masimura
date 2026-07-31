@@ -6,7 +6,6 @@ const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.set('trust proxy', 1);
@@ -22,15 +21,35 @@ app.use(express.json());
 // 1. Jadikan folder 'public/uploads' dapat diakses secara publik lewat URL
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+// 2. Storage Multer (Upload Gambar yang Mendukung .webp, .jpg, .png)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, 'public', 'uploads'));
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
   }
 });
-const upload = multer({ storage });
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|webp|avif/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+
+  if (extname && mimetype) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Hanya boleh mengunggah file gambar (JPG, JPEG, PNG, WEBP)!'));
+  }
+};
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Batas max 5MB
+  fileFilter: fileFilter
+});
 
 // --- Import Models ---
 const User = require('./models/User');
@@ -47,16 +66,13 @@ const transactionRoutes = require('./routes/transactionRoutes');
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// --- API UPLOAD GAMBAR ---
+// --- API UPLOAD GAMBAR (Wajib Ada agar Upload Tidak Error) ---
 app.post('/api/upload', upload.single('gambar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
   }
-  
-  // Menggunakan protocol (http/https) dan host yang sedang aktif (mendukung Railway & Localhost)
   const baseUrl = `${req.protocol}://${req.get('host')}`;
   const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
-  
   res.json({ imageUrl });
 });
 
@@ -162,6 +178,16 @@ app.get('/api/menus', async (req, res) => {
     res.json(menusWithStock);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/menus', async (req, res) => {
+  try {
+    const newMenu = new Menu(req.body);
+    await newMenu.save();
+    res.status(201).json(newMenu);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 
@@ -310,10 +336,8 @@ async function connectDB() {
     await mongoose.connect(process.env.MONGO_URI, clientOptions);
     console.log("Terhubung ke MongoDB Atlas!");
 
-    // 1. Jalankan Seed User Default
     await seedUsers(); 
 
-    // 2. Seed Category Default
     const count = await Category.countDocuments();
     if (count === 0) {
       await Category.insertMany([
