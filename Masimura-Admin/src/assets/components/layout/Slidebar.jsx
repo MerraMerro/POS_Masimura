@@ -85,7 +85,7 @@ function Slidebar({ collapsed, currentUser, onLogout }) {
 
   // Filter menu sesuai role pengguna (Kasir hanya melihat POS Kasir)
   const filteredMenuItems = menuItems.filter(
-    (item) => item.role === 'all' || (currentUser?.role === 'admin' && item.role === 'admin')
+    (item) => item.role === 'kasir' || (currentUser?.role === 'admin' && item.role === 'admin')
   )
 
   return (
