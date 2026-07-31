@@ -399,7 +399,7 @@ export default function MenuManagement() {
                     type="number"
                     required
                     value={formData.harga}
-                    onChange={(e) => setFormData({ ...formData, harga: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, harga: e.target.value === '' ? '' : Number(e.target.value) })}
                     className="w-full p-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
                   />
                 </div>
