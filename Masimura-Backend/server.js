@@ -49,14 +49,17 @@ const Stock = require('./models/Stock');
 const Transaction = require('./models/Transactions');
 const Category = require('./models/Category');
 const Employee = require('./models/Employee');
+const Promo = requier('./models/Promo')
 
 // --- Import & Gunakan Routes Terpisah ---
 const stockRoutes = require('./routes/stockRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const promoRoutes = require('./routes/promoRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('api/promos', promoRoutes);
 app.use('/api/users', userRoutes);
 
 // --- API UPLOAD GAMBAR KE CLOUDINARY ---

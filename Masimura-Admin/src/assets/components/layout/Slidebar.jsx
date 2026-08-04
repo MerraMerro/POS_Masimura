@@ -13,7 +13,8 @@ import {
     Zap, 
     User,
     FileText,
-    Settings
+    Settings,
+    PercentIcon
 } from 'lucide-react'
 import Logo from '../../../../public/logo.jpeg'
 
@@ -65,6 +66,13 @@ const menuItems = [
         icon: FileText,
         label: 'Reporting',
         path: '/reporting',
+        role: 'admin',
+    },
+    {
+        id: 'promotion',
+        icon: PercentIcon,
+        label: 'Promotion',
+        path: '/promotion',
         role: 'admin',
     },
     {
