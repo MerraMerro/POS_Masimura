@@ -15,6 +15,7 @@ import EmployeeManagement from './assets/components/Employee/EmployeeManagement'
 import ReportPage from './assets/components/Reporting/ReportPage'
 import AccountSettings from './assets/components/Auth/AccountSettings'
 import PromoManagement from './assets/components/Promo/PromoManagement'
+import ImportHistory from './assets/components/ImportHistory'
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -94,6 +95,7 @@ export default function App() {
                 <Route path='/reporting' element={<ReportPage />} />
                 <Route path='/setting' element={<AccountSettings />} />
                 <Route path='/promotion' element={<PromoManagement />} />
+                <Route path='/import' element={<ImportHistory />} />
               </>
             )}
 

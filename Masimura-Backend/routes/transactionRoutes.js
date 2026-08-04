@@ -306,4 +306,49 @@ router.get('/export/rekap-harian', async (req, res) => {
   }
 });
 
+// --- API KHUSUS IMPORT DATA HISTORIS (TANPA POTONG STOK) ---
+router.post('/import-history', async (req, res) => {
+  try {
+    const dataHarian = req.body; // Menerima array of objects atau single object
+
+    // Jika data yang dikirim adalah Array (banyak hari sekaligus)
+    if (Array.isArray(dataHarian)) {
+      const transactions = dataHarian.map(data => ({
+        nomorStruk: data.nomorStruk,
+        namaKonsumen: data.namaKonsumen || 'Rekap Manual',
+        items: data.items,
+        totalHarga: data.totalHarga,
+        nominalBayar: data.nominalBayar || data.totalHarga,
+        kembalian: data.kembalian || 0,
+        metodePembayaran: data.metodePembayaran || 'Tunai',
+        statusTransaksi: 'Selesai',
+        waktuTransaksi: new Date(data.waktuTransaksi) // Memaksa tanggal sesuai input
+      }));
+      
+      await Transaction.insertMany(transactions);
+      return res.status(201).json({ message: 'Data historis massal berhasil disimpan!' });
+    } 
+    
+    // Jika data yang dikirim hanya 1 hari tunggal
+    const newTransaction = new Transaction({
+      nomorStruk: dataHarian.nomorStruk,
+      namaKonsumen: dataHarian.namaKonsumen || 'Rekap Manual',
+      items: dataHarian.items,
+      totalHarga: dataHarian.totalHarga,
+      nominalBayar: dataHarian.nominalBayar || dataHarian.totalHarga,
+      kembalian: dataHarian.kembalian || 0,
+      metodePembayaran: dataHarian.metodePembayaran || 'Tunai',
+      statusTransaksi: 'Selesai',
+      waktuTransaksi: new Date(dataHarian.waktuTransaksi)
+    });
+
+    await newTransaction.save();
+    res.status(201).json({ message: 'Data historis berhasil disimpan!', transaction: newTransaction });
+
+  } catch (err) {
+    console.error('Error import history:', err);
+    res.status(400).json({ message: err.message });
+  }
+});
+
 module.exports = router;
