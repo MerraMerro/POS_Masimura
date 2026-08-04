@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Transaction = require('../models/Transaction'); // Pastikan nama model sesuai (Transaction bukan Transactions)
+const Transaction = require('../models/Transactions'); 
 const Stock = require('../models/Stock');
 
 // Get Semua Transaksi (Untuk Laporan)
