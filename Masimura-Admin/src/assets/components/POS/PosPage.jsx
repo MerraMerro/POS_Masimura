@@ -13,7 +13,7 @@ export default function PosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState([])
   
-  // State untuk tab mobile (hanya aktif di layar portrait kecil)
+  // State untuk tab mobile (aktif di semua orientasi HP, tersembunyi di PC)
   const [activeTabMobile, setActiveTabMobile] = useState('menu') 
   
   // Field Form Transaksi
@@ -232,10 +232,10 @@ export default function PosPage() {
   })
 
   return (
-    <div className="h-full min-h-0 flex flex-col lg:grid lg:grid-cols-3 lg:gap-6 overflow-hidden">
+    <div className="relative h-full min-h-0 flex flex-col lg:grid lg:grid-cols-3 lg:gap-6 pb-20 lg:pb-0 overflow-hidden">
       
-      {/* ================= TOMBOL NAVIGASI MOBILE (Hanya tampil di HP posisi potret) ================= */}
-      <div className="lg:hidden landscape:hidden flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-2 shrink-0 z-10 sticky top-0 shadow-sm">
+      {/* ================= TOMBOL NAVIGASI MOBILE (Hanya tampil di HP, tersembunyi di PC) ================= */}
+      <div className="lg:hidden flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-2 shrink-0 z-10 sticky top-0 shadow-sm">
         <button
           onClick={() => setActiveTabMobile('menu')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
@@ -266,7 +266,7 @@ export default function PosPage() {
 
       {/* ================= KOLOM KIRI: KATALOG MENU ================= */}
       <div className={`lg:col-span-2 flex flex-col space-y-4 overflow-y-auto pr-0 lg:pr-2 h-full ${
-        activeTabMobile === 'menu' ? 'flex' : 'hidden lg:flex landscape:flex'
+        activeTabMobile === 'menu' ? 'flex' : 'hidden lg:flex'
       }`}>
         <div className="bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl rounded-2xl p-3 sm:p-4 border border-slate-200/50 dark:border-slate-700/50 space-y-3 shrink-0 shadow-sm">
           <div className="relative">
@@ -307,8 +307,8 @@ export default function PosPage() {
           </div>
         </div>
 
-        {/* Grid Menu Responsif (3 kolom di landscape/laptop, 2 kolom di portrait) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 landscape:grid-cols-3 gap-3 pb-6">
+        {/* Grid Menu Responsif */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-6">
           {filteredMenus.map((menu) => {
             const isHabis = menu.resep && menu.resep.some(item => {
               const stokTersedia = item.sisaStok !== undefined && item.sisaStok !== null ? Number(item.sisaStok) : 0;
@@ -325,7 +325,7 @@ export default function PosPage() {
                     : 'hover:border-blue-500 cursor-pointer group active:scale-95'
                 }`}
               >
-                <div className="w-full h-20 sm:h-24 landscape:h-20 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 overflow-hidden border border-slate-200/50 dark:border-slate-700/50 relative">
+                <div className="w-full h-20 sm:h-24 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 overflow-hidden border border-slate-200/50 dark:border-slate-700/50 relative">
                   {isHabis && (
                     <div className="absolute inset-0 bg-slate-900/40 z-10 flex items-center justify-center backdrop-blur-sm">
                       <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
@@ -376,7 +376,7 @@ export default function PosPage() {
 
       {/* ================= KOLOM KANAN: PANEL KERANJANG & PEMBAYARAN ================= */}
       <div className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-3 sm:p-4 flex flex-col justify-between h-full shadow-sm overflow-hidden ${
-        activeTabMobile === 'cart' ? 'flex flex-col flex-1' : 'hidden lg:flex landscape:flex'
+        activeTabMobile === 'cart' ? 'flex flex-col flex-1' : 'hidden lg:flex'
       }`}>
         
         {transactionStatus === 'idle' && (
@@ -401,8 +401,8 @@ export default function PosPage() {
               />
             </div>
 
-            {/* Daftar Item Keranjang (Dapat di-scroll jika panjang) */}
-            <div className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-[80px] max-h-[140px] landscape:max-h-[100px] sm:max-h-none">
+            {/* Daftar Item Keranjang */}
+            <div className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-20">
               {cart.length === 0 ? (
                 <p className="text-center text-xs text-slate-400 py-6">Keranjang kosong</p>
               ) : (
@@ -513,34 +513,44 @@ export default function PosPage() {
         )}
 
         {transactionStatus === 'pending' && (
-          <div className="flex flex-col items-center justify-center h-full space-y-3 text-center py-2">
-            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center animate-pulse">
-              <Clock className="w-6 h-6" />
+          <div className="flex flex-col items-center justify-center h-full space-y-4 text-center py-4">
+            <div className="w-14 h-14 bg-amber-100 dark:bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center animate-pulse">
+              <Clock className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Menunggu QRIS</h3>
-              <p className="text-[11px] text-slate-500 font-bold text-blue-500">
-                Rp {totalHarga.toLocaleString('id-ID')}
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">Menunggu Pembayaran QRIS</h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Total Tagihan: <br/>
+                <span className="font-extrabold text-blue-600 dark:text-blue-400 text-lg sm:text-xl tracking-wide">
+                  Rp {totalHarga.toLocaleString('id-ID')}
+                </span>
               </p>
             </div>
-            <div className="p-2 bg-white rounded-xl border border-slate-200">
-              <img src="/qr_pembayaran.jpeg" alt="qris" className='w-24 h-24 mx-auto'/>
+
+            {/* UKURAN QRIS DIPERBESAR */}
+            <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-slate-300 shadow-md">
+              <img 
+                src="/qr_pembayaran.jpeg" 
+                alt="QRIS Pembayaran" 
+                className="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto rounded-lg"
+              />
             </div>
-            <div className="w-full space-y-1.5 mt-auto">
+
+            <div className="w-full space-y-2 mt-auto pt-2">
               <button 
                 onClick={() => handleVerifyQris(true)}
                 disabled={isProcessing}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all"
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{isProcessing ? 'Memproses...' : 'Uang Masuk (Sukses)'}</span>
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{isProcessing ? 'Memproses...' : 'Uang Sudah Masuk (Sukses)'}</span>
               </button>
               <button 
                 onClick={() => handleVerifyQris(false)}
                 disabled={isProcessing}
-                className="w-full bg-red-100 text-red-600 font-bold py-1.5 rounded-xl text-xs"
+                className="w-full bg-red-100 hover:bg-red-200 dark:bg-red-500/20 text-red-600 font-bold py-2.5 rounded-xl text-xs sm:text-sm transition-all"
               >
-                Batalkan
+                Batalkan Pesanan
               </button>
             </div>
           </div>
