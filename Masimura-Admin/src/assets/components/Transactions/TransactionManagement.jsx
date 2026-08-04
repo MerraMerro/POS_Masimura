@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { CreditCard, Search, Calendar, FileText, ArrowLeftRight, Edit2, Trash2, X } from 'lucide-react'
+import { CreditCard, Search, Calendar, FileText, ArrowLeftRight, Edit2, Trash2, X, Eye, Printer } from 'lucide-react'
 import { API_URL } from '../../../config/api'
 
 export default function TransactionManagement() {
@@ -15,6 +15,14 @@ export default function TransactionManagement() {
     statusTransaksi: 'Selesai',
     metodePembayaran: 'Tunai'
   })
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] = useState(null)
+
+  const handleOpenDetail = (trx) => {
+    setSelectedTransaction(trx)
+    setIsDetailModalOpen(true)
+  }
 
   useEffect(() => {
     fetchTransactions()
@@ -218,6 +226,14 @@ export default function TransactionManagement() {
                     </td>
                     <td className="p-3 sm:p-4 text-center">
                       <div className="flex items-center justify-center space-x-1.5 sm:space-x-2">
+                        {/* Tombol Detail */}
+                        <button 
+                          onClick={() => handleOpenDetail(trx)}
+                          className="p-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
+                          title="Lihat Detail & Cetak Struk"
+                        >
+                          <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        </button>
                         {/* Tombol Edit */}
                         <button 
                           onClick={() => handleOpenModal(trx)}
@@ -310,6 +326,88 @@ export default function TransactionManagement() {
           </div>
         </div>
       )}
+      
+      {/* ================= MODAL DETAIL / CETAK STRUK ================= */}
+      {isDetailModalOpen && selectedTransaction && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white text-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl relative">
+            <button
+              onClick={() => setIsDetailModalOpen(false)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 no-print"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Area Struk (Bisa dicetak) */}
+            <div id="nota-cetak" className="pt-2">
+              <div className="text-center border-b pb-3 border-slate-200 border-dashed mb-3">
+                <h3 className="text-xl font-extrabold tracking-wider text-slate-900">MASIMURA POS</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Bukti Pembayaran Konsumen</p>
+                <div className="text-[11px] text-slate-500 mt-2 space-y-1 text-left bg-slate-50 p-2 rounded-lg">
+                  <p className="flex justify-between"><span>No. Struk:</span> <span className="font-bold text-slate-800">{selectedTransaction.nomorStruk}</span></p>
+                  <p className="flex justify-between"><span>Konsumen:</span> <span className="font-bold text-slate-800">{selectedTransaction.namaKonsumen}</span></p>
+                  <p className="flex justify-between"><span>Metode:</span> <span className="font-bold text-slate-800 capitalize">{selectedTransaction.metodePembayaran || 'Tunai'}</span></p>
+                  <p className="flex justify-between"><span>Waktu:</span> <span className="font-bold text-slate-800">
+                    {new Date(selectedTransaction.waktuTransaksi || selectedTransaction.createdAt).toLocaleString('id-ID', {
+                      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span></p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs max-h-48 overflow-y-auto pr-1">
+                {selectedTransaction.items?.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-slate-800">{item.namaMenu}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{item.kuantitas} x Rp {item.harga?.toLocaleString('id-ID')}</p>
+                    </div>
+                    <span className="font-bold text-slate-800 pt-0.5">
+                      Rp {(item.harga * item.kuantitas).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-dashed border-slate-300 pt-3 mt-3 text-xs space-y-1.5">
+                <div className="flex justify-between font-extrabold text-sm text-slate-900">
+                  <span>Total Harga:</span>
+                  <span>Rp {selectedTransaction.totalHarga?.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-slate-600 text-[11px]">
+                  <span>Nominal Bayar:</span>
+                  <span>Rp {selectedTransaction.nominalBayar?.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-slate-600 text-[11px]">
+                  <span>Kembalian:</span>
+                  <span>Rp {selectedTransaction.kembalian?.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Tombol Aksi Modal */}
+            <div className="pt-3 flex gap-2 no-print border-t border-slate-100">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-all shadow-md"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Cetak Nota</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSS Khusus untuk Print */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * { visibility: hidden; }
+          #nota-cetak, #nota-cetak * { visibility: visible; }
+          #nota-cetak { position: absolute; left: 0; top: 0; width: 100%; padding: 10mm; }
+          .no-print { display: none !important; }
+        }
+      `}} />
     </div>
   )
 }

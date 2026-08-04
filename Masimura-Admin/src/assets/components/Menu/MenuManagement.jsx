@@ -5,7 +5,7 @@ import { API_URL } from '../../../config/api'
 export default function MenuManagement() {
   const [menus, setMenus] = useState([])
   const [categories, setCategories] = useState([])
-  const [stocks, setStocks] = useState([]) // Data bahan baku untuk dropdown resep
+  const [stocks, setStocks] = useState([]) 
   
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('Semua')
@@ -24,8 +24,8 @@ export default function MenuManagement() {
     namaMenu: '',
     kategori: '',
     harga: '',
-    gambar: '', // URL gambar
-    resep: [] // Array bahan baku: { stockId, namaBahan, kuantitas }
+    gambar: '', 
+    resep: [] 
   })
 
   // State Sementara untuk Form Resep
@@ -94,11 +94,9 @@ export default function MenuManagement() {
   const handleAddResep = () => {
     if (!tempBahanId || !tempKuantitas) return alert('Pilih bahan dan masukkan kuantitas!')
     
-    // Cari nama bahan dari daftar stocks berdasarkan ID
     const selectedStock = stocks.find(s => s._id === tempBahanId)
     if (!selectedStock) return
 
-    // Cek apakah bahan sudah ada di resep, jika ada, update kuantitasnya saja
     const existingIndex = formData.resep.findIndex(r => r.stockId === tempBahanId)
     let newResep = [...formData.resep]
     
@@ -108,6 +106,7 @@ export default function MenuManagement() {
       newResep.push({
         stockId: tempBahanId,
         namaBahan: selectedStock.namaBahan,
+        satuan: selectedStock.satuan || 'Pcs', // Tambahkan field satuan agar tampil di UI list resep
         kuantitas: Number(tempKuantitas)
       })
     }
@@ -130,7 +129,6 @@ export default function MenuManagement() {
     try {
       let imageUrl = formData.gambar
 
-      // 1. Jika ada file gambar baru yang dipilih, upload dulu!
       if (selectedFile) {
         const imageFormData = new FormData()
         imageFormData.append('gambar', selectedFile)
@@ -149,7 +147,6 @@ export default function MenuManagement() {
         }
       }
 
-      // 2. Simpan Data Menu (beserta Resep dan URL Gambar)
       const payload = {
         ...formData,
         gambar: imageUrl
@@ -254,7 +251,6 @@ export default function MenuManagement() {
       {/* Table Section */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          {/* min-w-[700px] memaksa tabel tetap lebar di layar HP dan bisa di-scroll secara horizontal */}
           <table className="w-full min-w-175">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
@@ -380,7 +376,7 @@ export default function MenuManagement() {
                     >
                       Pilih File
                     </button>
-                    <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Max 2MB)</p>
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Max 5MB)</p>
                   </div>
                 </div>
               </div>
@@ -428,7 +424,9 @@ export default function MenuManagement() {
                     >
                       <option value="">Pilih Bahan Baku...</option>
                       {stocks.map(s => (
-                        <option key={s._id} value={s._id}>{s.namaBahan}</option>
+                        <option key={s._id} value={s._id}>
+                          {s.namaBahan} ({s.satuan || 'Pcs'})
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -457,23 +455,31 @@ export default function MenuManagement() {
                   {formData.resep.length === 0 ? (
                     <p className="text-[10px] sm:text-xs text-slate-400 text-center py-2 italic">Belum ada bahan resep.</p>
                   ) : (
-                    formData.resep.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <span className="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          {item.namaBahan}
-                        </span>
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                          <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">Qty: {item.kuantitas}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveResep(index)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                          >
-                            <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          </button>
+                    formData.resep.map((item, index) => {
+                      // Gunakan stock tersimpan untuk sinkronisasi tampilan fallback satuan
+                      const matchingStock = stocks.find(s => s._id === item.stockId)
+                      const displaySatuan = item.satuan || matchingStock?.satuan || 'Pcs'
+                      
+                      return (
+                        <div key={index} className="flex justify-between items-center bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm">
+                          <span className="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {item.namaBahan}
+                          </span>
+                          <div className="flex items-center space-x-2 sm:space-x-3">
+                            <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
+                              Qty: {item.kuantitas} {displaySatuan.split(' ')[0]}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveResep(index)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>

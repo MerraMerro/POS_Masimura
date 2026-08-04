@@ -6,6 +6,7 @@ const stockSchema = new mongoose.Schema({
   stokAwal: { type: Number, required: true },
   stokTerpakai: { type: Number, default: 0 },
   sisaStok: { type: Number, required: true },
+  satuan: { type: String, default: 'Gram (gr)' },
   tanggalInput: { type: Date, default: Date.now }
 }, { timestamps: true });
 

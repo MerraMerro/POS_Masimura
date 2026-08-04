@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Transaction = require('../models/Transactions');
-const Menu = require('../models/Menu');
+const Transaction = require('../models/Transaction'); // Pastikan nama model sesuai (Transaction bukan Transactions)
 const Stock = require('../models/Stock');
 
 // Get Semua Transaksi (Untuk Laporan)
@@ -26,20 +25,21 @@ router.post('/', async (req, res) => {
       totalHarga,
       nominalBayar,
       kembalian,
-      metodePembayaran: metodePembayaran || 'Tunai', 
+      metodePembayaran: metodePembayaran || 'tunai', 
       statusTransaksi: 'Selesai'
     });
 
+    // Proses Pemotongan Stok Langsung dari resep yang dikirim Frontend
     if (items && Array.isArray(items)) {
       for (const item of items) {
-        if (!item.menuId) continue;
-        const menuData = await Menu.findById(item.menuId);
-        
-        if (menuData && menuData.resep) {
-          for (const resepItem of menuData.resep) {
-            const totalTerpakai = resepItem.kuantitas * (item.kuantitas || 1);
+        if (item.resep && Array.isArray(item.resep)) {
+          for (const resepItem of item.resep) {
+            const totalTerpakai = Number(resepItem.kuantitas) * Number(item.kuantitas || 1);
 
-            await Stock.findByIdAndUpdate(resepItem.stockId, {
+            // Kita cari bahan baku berdasarkan ID atau Nama (fleksibel)
+            const query = resepItem.stockId ? { _id: resepItem.stockId } : { namaBahan: resepItem.namaBahan };
+
+            await Stock.findOneAndUpdate(query, {
               $inc: { 
                 stokTerpakai: totalTerpakai,
                 sisaStok: -totalTerpakai 
@@ -95,17 +95,16 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Transaksi tidak ditemukan' });
     }
 
-    // Restorasi Stok Bahan Baku
+    // Restorasi Stok Bahan Baku menggunakan resep historis yang tersimpan di struk
     if (transaction.items && Array.isArray(transaction.items)) {
       for (const item of transaction.items) {
-        if (!item.menuId) continue;
-        const menuData = await Menu.findById(item.menuId);
-        
-        if (menuData && menuData.resep) {
-          for (const resepItem of menuData.resep) {
-            const totalDikembalikan = resepItem.kuantitas * (item.kuantitas || 1);
+        if (item.resep && Array.isArray(item.resep)) {
+          for (const resepItem of item.resep) {
+            const totalDikembalikan = Number(resepItem.kuantitas) * Number(item.kuantitas || 1);
 
-            await Stock.findByIdAndUpdate(resepItem.stockId, {
+            const query = resepItem.stockId ? { _id: resepItem.stockId } : { namaBahan: resepItem.namaBahan };
+
+            await Stock.findOneAndUpdate(query, {
               $inc: { 
                 stokTerpakai: -totalDikembalikan,
                 sisaStok: totalDikembalikan 
@@ -117,7 +116,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     await Transaction.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Transaksi berhasil dihapus dan stok bahan baku telah dipulihkan!' });
+    res.json({ message: 'Transaksi berhasil dihapus dan stok bahan baku telah dipulihkan secara akurat!' });
 
   } catch (err) {
     console.error('Error saat menghapus transaksi:', err);

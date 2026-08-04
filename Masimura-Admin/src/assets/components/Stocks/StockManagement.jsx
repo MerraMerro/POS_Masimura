@@ -22,14 +22,33 @@ export default function StockManagement() {
   const [editingId, setEditingId] = useState(null)
   
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false)
-  const [restockData, setRestockData] = useState({ id: null, namaBahan: '', currentStok: 0, addAmount: '' })
+  const [restockData, setRestockData] = useState({ 
+    id: null, 
+    namaBahan: '', 
+    currentStok: 0, 
+    satuan: '',
+    jumlahMasuk: '', 
+    totalHargaBeli: '' 
+  })
 
-  // Form State Utama (Add/Edit)
+  // Form State Utama (Add/Edit) ditambah field 'satuan'
   const [formData, setFormData] = useState({
     namaBahan: '',
     hargaBahan: '',
-    sisaStok: ''
+    sisaStok: '',
+    satuan: 'Gram (gr)' // Default value
   })
+
+  // Daftar Pilihan Satuan
+  const satuanOptions = [
+    'Gram (gr)', 
+    'Kilogram (kg)', 
+    'Mililiter (ml)', 
+    'Liter (L)', 
+    'Pieces (pcs)', 
+    'Bungkus', 
+    'Botol'
+  ]
 
   useEffect(() => {
     fetchStocks()
@@ -52,14 +71,16 @@ export default function StockManagement() {
       setFormData({
         namaBahan: stock.namaBahan,
         hargaBahan: stock.hargaBahan,
-        sisaStok: stock.sisaStok
+        sisaStok: stock.sisaStok,
+        satuan: stock.satuan || 'Gram (gr)'
       })
     } else {
       setEditingId(null)
       setFormData({
         namaBahan: '',
         hargaBahan: '',
-        sisaStok: ''
+        sisaStok: '',
+        satuan: 'Gram (gr)'
       })
     }
     setIsModalOpen(true)
@@ -72,12 +93,12 @@ export default function StockManagement() {
       : `${API_URL}/api/stocks`
     const method = editingId ? 'PUT' : 'POST'
 
-    // Jika membuat bahan baru, kirim sisaStok (serta stokAwal dummy agar tidak error di DB lama)
     const payload = editingId 
       ? {
           namaBahan: formData.namaBahan,
           hargaBahan: formData.hargaBahan,
-          sisaStok: formData.sisaStok
+          sisaStok: formData.sisaStok,
+          satuan: formData.satuan
         }
       : { 
           ...formData, 
@@ -101,12 +122,13 @@ export default function StockManagement() {
     }
   }
 
-  // --- FUNGSI RESTOCK (TAMBAH STOK CEPAT) ---
+  // --- FUNGSI RESTOCK DINAMIS ---
   const handleOpenRestock = (stock) => {
     setRestockData({
       id: stock._id,
       namaBahan: stock.namaBahan,
       currentStok: stock.sisaStok,
+      satuan: stock.satuan || '',
       jumlahMasuk: '',
       totalHargaBeli: ''
     })
@@ -153,7 +175,7 @@ export default function StockManagement() {
 
   const filteredStocks = stocks.filter((stock) => {
     const matchesSearch = stock.namaBahan.toLowerCase().includes(searchTerm.toLowerCase())
-    const isLow = stock.sisaStok <= 5
+    const isLow = stock.sisaStok <= 5 // Nilai indikator 'menipis' ini idealnya nanti bisa dibuat dinamis per bahan
     
     if (selectedStatus === 'Aman') return matchesSearch && !isLow
     if (selectedStatus === 'Menipis') return matchesSearch && isLow
@@ -169,7 +191,7 @@ export default function StockManagement() {
             Kelola Stok Bahan Baku
           </h3>
           <p className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400">
-            Inventaris Bahan Dapur dan Pemantauan Sisa Stok Mingguan
+            Inventaris Bahan Dapur dan Pemantauan Sisa Stok
           </p>
         </div>
         <button
@@ -214,12 +236,11 @@ export default function StockManagement() {
       {/* Tabel Stok Bahan Baku */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          {/* min-w-[700px] memaksa tabel tetap lebar di layar HP dan bisa discroll horizontal */}
           <table className="w-full min-w-[700px]">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
                 <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Nama Bahan</th>
-                <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Harga Modal</th>
+                <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Harga Modal (Avg)</th>
                 <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Stok Tersedia</th>
                 <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Status</th>
                 <th className="text-center p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Aksi</th>
@@ -247,12 +268,12 @@ export default function StockManagement() {
                       </td>
                       <td className="p-3 sm:p-4">
                         <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
-                          Rp {stock.hargaBahan?.toLocaleString('id-ID')}
+                          Rp {stock.hargaBahan?.toLocaleString('id-ID')} <span className="text-[10px] text-slate-400">/ {stock.satuan?.split(' ')[0]}</span>
                         </span>
                       </td>
                       <td className="p-3 sm:p-4">
                         <span className={`text-sm sm:text-base font-black ${isLow ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                          {stock.sisaStok}
+                          {stock.sisaStok} <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{stock.satuan}</span>
                         </span>
                       </td>
                       <td className="p-3 sm:p-4">
@@ -267,7 +288,6 @@ export default function StockManagement() {
                       </td>
                       <td className="p-3 sm:p-4 text-center">
                         <div className="flex items-center justify-center space-x-1.5 sm:space-x-2">
-                          {/* Tombol Restock */}
                           <button
                             onClick={() => handleOpenRestock(stock)}
                             className="p-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg transition-colors"
@@ -276,7 +296,6 @@ export default function StockManagement() {
                             <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                           
-                          {/* Tombol Edit */}
                           <button
                             onClick={() => handleOpenModal(stock)}
                             className="p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
@@ -285,7 +304,6 @@ export default function StockManagement() {
                             <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                           
-                          {/* Tombol Hapus */}
                           <button
                             onClick={() => handleDelete(stock._id, stock.namaBahan)}
                             className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
@@ -323,6 +341,7 @@ export default function StockManagement() {
                 <input
                   type="text"
                   required
+                  placeholder="Misal: Kecap Manis, Minyak Goreng, Fillet Dada"
                   value={formData.namaBahan}
                   onChange={(e) => setFormData({ ...formData, namaBahan: e.target.value })}
                   className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
@@ -331,7 +350,19 @@ export default function StockManagement() {
 
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">Harga Modal (Rp)</label>
+                  <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">Satuan Pengukuran</label>
+                  <select
+                    value={formData.satuan}
+                    onChange={(e) => setFormData({ ...formData, satuan: e.target.value })}
+                    className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                  >
+                    {satuanOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">Harga Modal Awal (Rp)</label>
                   <input
                     type="number"
                     required
@@ -346,28 +377,29 @@ export default function StockManagement() {
                     className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
                   />
                 </div>
-
-                <div>
-                  <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    {editingId ? 'Sisa Stok Saat Ini' : 'Stok Awal'}
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.sisaStok}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFormData({ 
-                          ...formData, 
-                          sisaStok: val === '' ? '' : Number(val) 
-                      });
-                    }}
-                    className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
-                  />
-                </div>
               </div>
 
-              <div className="pt-3 sm:pt-4 flex justify-end space-x-2">
+              <div>
+                <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {editingId ? 'Sisa Stok Saat Ini' : 'Stok Awal'} <span className="text-blue-500">dalam {formData.satuan.split(' ')[0]}</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  placeholder={`Contoh: 1000 (jika 1 Kg/1 Liter)`}
+                  value={formData.sisaStok}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({ 
+                        ...formData, 
+                        sisaStok: val === '' ? '' : Number(val) 
+                    });
+                  }}
+                  className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div className="pt-3 sm:pt-4 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-700 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -387,14 +419,14 @@ export default function StockManagement() {
         </div>
       )}
 
-      {/* ================= MODAL RESTOCK KHUSUS ================= */}
+      {/* ================= MODAL RESTOCK DINAMIS ================= */}
       {isRestockModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 w-full max-w-sm p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 sm:pb-3">
               <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                Restock Bahan & Update Harga
+                Restock Bahan
               </h3>
               <button onClick={() => setIsRestockModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -407,19 +439,19 @@ export default function StockManagement() {
                   Pembelian stok untuk <span className="font-bold text-slate-800 dark:text-white">{restockData.namaBahan}</span>.
                 </p>
                 <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
-                  Stok saat ini di gudang: <span className="font-bold">{restockData.currentStok}</span>
+                  Sisa saat ini di gudang: <span className="font-bold">{restockData.currentStok} {restockData.satuan}</span>
                 </p>
               </div>
 
               <div>
                 <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  Jumlah Stok yang Dibeli / Masuk
+                  Jumlah yang Masuk <span className="text-blue-500">(dalam {restockData.satuan?.split(' ')[0]})</span>
                 </label>
                 <input
                   type="number"
                   required
                   min="1"
-                  placeholder="Contoh: 10"
+                  placeholder="Contoh: 1000"
                   value={restockData.jumlahMasuk}
                   onChange={(e) => setRestockData({ ...restockData, jumlahMasuk: e.target.value })}
                   className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white font-bold"
@@ -428,7 +460,7 @@ export default function StockManagement() {
 
               <div>
                 <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  Total Harga Bayar ke Supplier (Rp) <span className="text-[10px] text-blue-500 font-normal">*(Sesuaikan jika ada diskon)</span>
+                  Total Harga Bayar ke Supplier (Rp) <span className="text-[10px] text-blue-500 font-normal">*(Sesuai struk pembelian)</span>
                 </label>
                 <input
                   type="number"
@@ -441,7 +473,7 @@ export default function StockManagement() {
                 />
               </div>
 
-              <div className="pt-3 sm:pt-4 flex justify-end space-x-2">
+              <div className="pt-3 sm:pt-4 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-700 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsRestockModalOpen(false)}
