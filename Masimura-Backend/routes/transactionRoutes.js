@@ -205,7 +205,7 @@ router.get('/export/rekap-menu', async (req, res) => {
 
       // 2. Baris Data (Tanggal 1 s/d 31)
       for (let i = 1; i <= daysInMonth; i++) {
-        let row = `${i}/${month},`;
+        let row = `='${i}/${month}',`;
         let rowTotal = 0;
         
         arrMenu.forEach(m => {

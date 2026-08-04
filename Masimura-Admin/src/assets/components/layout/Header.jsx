@@ -105,15 +105,17 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
                             <Moon className="w-4 h-4 text-slate-600" />
                         )}
                     </button>
-
-                    <div className='flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-700'>
-                        <img src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' alt="User" className='w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-blue-500'/>
-                        <div className='hidden md:block'>
-                            <p className='text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200'>John Doe</p>
-                            <p className='text-[10px] text-slate-500 dark:text-slate-400'>Admin</p>
+                    
+                    {currentUser && (
+                        <div className='flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-700'>
+                            <img src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' alt="User" className='w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-blue-500'/>
+                            <div className='hidden md:block'>
+                                <p className='text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200'>{currentUser.nama}</p>
+                                <p className='text-[10px] text-slate-500 dark:text-slate-400'>{currentUser.role}</p>
+                            </div>
+                            <ChevronDown className='w-3.5 h-3.5 text-slate-400'/>
                         </div>
-                        <ChevronDown className='w-3.5 h-3.5 text-slate-400'/>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
