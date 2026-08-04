@@ -13,6 +13,7 @@ import Header from './assets/components/layout/Header'
 import Slidebar from './assets/components/layout/Slidebar'
 import EmployeeManagement from './assets/components/Employee/EmployeeManagement'
 import ReportPage from './assets/components/Reporting/ReportPage'
+import AccountSettings from './assets/components/Auth/AccountSettings'
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -89,6 +90,7 @@ export default function App() {
                 <Route path="/transactions" element={<TransactionManagement />} />
                 <Route path='/employee' element={<EmployeeManagement />} />
                 <Route path='/reporting' element={<ReportPage />} />
+                <Route path='/setting' element={<AccountSettings />} />
               </>
             )}
 

@@ -12,7 +12,8 @@ import {
   Receipt,
   Zap, 
   User,
-  FileText
+  FileText,
+  Settings
 } from 'lucide-react'
 import Logo from '../../../../public/logo.jpeg'
 
@@ -64,6 +65,13 @@ const menuItems = [
     icon: FileText,
     label: 'Reporting',
     path: '/reporting',
+    role: 'admin',
+  },
+  {
+    id: 'settings',
+    icon: Settings,
+    label: 'Setting',
+    path: '/setting',
     role: 'admin',
   },
 ];

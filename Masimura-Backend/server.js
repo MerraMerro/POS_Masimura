@@ -39,7 +39,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // Batas max 5MB
+  limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
 // --- Import Models ---
@@ -53,9 +53,11 @@ const Employee = require('./models/Employee');
 // --- Import & Gunakan Routes Terpisah ---
 const stockRoutes = require('./routes/stockRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/users', userRoutes);
 
 // --- API UPLOAD GAMBAR KE CLOUDINARY ---
 app.post('/api/upload', upload.single('gambar'), (req, res) => {
