@@ -124,7 +124,7 @@ export default function CategoryManagement() {
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           {/* min-w-[500px] memaksa tabel tetap rapi dan bisa discroll jika di layar HP sangat sempit */}
-          <table className="w-full min-w-[500px]">
+          <table className="w-full min-w-125">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30">
                 <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Nama Kategori</th>

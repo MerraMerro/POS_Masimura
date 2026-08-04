@@ -165,7 +165,7 @@ export default function TransactionManagement() {
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           {/* min-w-[800px] memaksa tabel tetap lebar di layar HP dan bisa di-scroll horizontal */}
-          <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-200">
             <thead className="bg-slate-50/50 dark:bg-slate-800/30">
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50">
                 <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">No Struk</th>
@@ -326,7 +326,7 @@ export default function TransactionManagement() {
           </div>
         </div>
       )}
-      
+
       {/* ================= MODAL DETAIL / CETAK STRUK ================= */}
       {isDetailModalOpen && selectedTransaction && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
