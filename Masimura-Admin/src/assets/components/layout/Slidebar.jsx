@@ -14,7 +14,8 @@ import {
     User,
     FileText,
     Settings,
-    PercentIcon
+    PercentIcon,
+    History
 } from 'lucide-react'
 import Logo from '../../../../public/logo.jpeg'
 
@@ -59,6 +60,13 @@ const menuItems = [
         icon: Receipt,
         label: 'Transactions',
         path: '/transactions',
+        role: 'admin',
+    },
+    {
+        id: 'history',
+        icon: History,
+        label: 'History',
+        path: '/import',
         role: 'admin',
     },
     {
