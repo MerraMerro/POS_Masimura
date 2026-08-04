@@ -83,4 +83,43 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Hapus Transaksi & Kembalikan (Restorasi) Stok Bahan Baku
+router.delete('/:id', async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+    
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaksi tidak ditemukan' });
+    }
+
+    if (transaction.items && transaction.items.length > 0) {
+      for (const item of transaction.items) {
+        const menuData = await Menu.findById(item.menuId);
+        
+        if (menuData && menuData.resep) {
+          for (const resepItem of menuData.resep) {
+            const totalDikembalikan = resepItem.kuantitas * item.kuantitas;
+
+            await Stock.findByIdAndUpdate(resepItem.stockId, {
+              $inc: { 
+                stokTerpakai: -totalDikembalikan,
+                sisaStok: totalDikembalikan 
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // 3. Hapus data transaksi dari database
+    await Transaction.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Transaksi berhasil dihapus dan stok bahan baku telah dipulihkan!' });
+
+  } catch (err) {
+    console.error('Error saat menghapus transaksi:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

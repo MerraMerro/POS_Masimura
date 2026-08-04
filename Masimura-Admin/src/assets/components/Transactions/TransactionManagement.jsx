@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { CreditCard, Search, Calendar, FileText, ArrowLeftRight, Edit2, X } from 'lucide-react'
+import { CreditCard, Search, Calendar, FileText, ArrowLeftRight, Edit2, Trash2, X } from 'lucide-react'
 import { API_URL } from '../../../config/api'
 
 export default function TransactionManagement() {
@@ -77,6 +77,29 @@ export default function TransactionManagement() {
       alert('Terjadi kesalahan koneksi')
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  // --- LOGIKA HAPUS TRANSAKSI ---
+  const handleDelete = async (id, nomorStruk) => {
+    if (!window.confirm(`Yakin ingin menghapus transaksi ${nomorStruk}? Stok bahan baku yang terkait akan dipulihkan.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/transactions/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        fetchTransactions()
+      } else {
+        const errorData = await res.json()
+        alert(errorData.message || 'Gagal menghapus transaksi')
+      }
+    } catch (err) {
+      console.error('Error saat menghapus:', err)
+      alert('Terjadi kesalahan koneksi')
     }
   }
 
@@ -193,13 +216,24 @@ export default function TransactionManagement() {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      <button 
-                        onClick={() => handleOpenModal(trx)}
-                        className="p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-colors"
-                        title="Edit Transaksi"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-center space-x-2">
+                        {/* Tombol Edit */}
+                        <button 
+                          onClick={() => handleOpenModal(trx)}
+                          className="p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-colors"
+                          title="Edit Transaksi"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        {/* Tombol Hapus */}
+                        <button 
+                          onClick={() => handleDelete(trx._id, trx.nomorStruk)}
+                          className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                          title="Hapus Transaksi"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
