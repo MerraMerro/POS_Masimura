@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react'
 import { 
   Search, ShoppingBag, Plus, Minus, Trash2, 
   CreditCard, Printer, User, X, Banknote, 
-  QrCode, Clock, CheckCircle2, XCircle 
+  QrCode, Clock, CheckCircle2, XCircle, Tag 
 } from 'lucide-react'
 import { API_URL } from '../../../config/api'
 
 export default function PosPage() {
   const [menus, setMenus] = useState([])
   const [categories, setCategories] = useState([])
+  const [promos, setPromos] = useState([]) // State baru untuk menyimpan data promo
+  
   const [selectedCategory, setSelectedCategory] = useState('Semua')
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState([])
@@ -28,6 +30,7 @@ export default function PosPage() {
   useEffect(() => {
     fetchMenus()
     fetchCategories()
+    fetchPromos() // Panggil fetch promo saat komponen dimuat
   }, [])
 
   const fetchMenus = async () => {
@@ -47,6 +50,44 @@ export default function PosPage() {
       setCategories(data)
     } catch (err) {
       console.error('Gagal mengambil kategori:', err)
+    }
+  }
+
+  const fetchPromos = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/promos`).catch(() => ({ json: () => [] }))
+      if (res.ok) {
+        const data = await res.json()
+        setPromos(data)
+      }
+    } catch (err) {
+      console.error('Gagal mengambil promo:', err)
+    }
+  }
+
+  // --- LOGIKA PERHITUNGAN DISKON/PROMO ---
+  const getMenuPriceInfo = (menuId, originalPrice) => {
+    // Cari apakah menu ini masuk dalam promo yang aktif
+    const activePromo = promos.find(p => p.status === 'Aktif' && p.menuTerpilih?.includes(menuId))
+    
+    if (!activePromo) {
+      return { hargaAkhir: originalPrice, isPromo: false }
+    }
+
+    let hargaAkhir = originalPrice
+    if (activePromo.tipeDiskon === 'Persentase') {
+      hargaAkhir = originalPrice - (originalPrice * (activePromo.nilaiDiskon / 100))
+    } else if (activePromo.tipeDiskon === 'Nominal') {
+      hargaAkhir = originalPrice - activePromo.nilaiDiskon
+      if (hargaAkhir < 0) hargaAkhir = 0 // Harga tidak boleh minus
+    }
+
+    return { 
+      hargaAkhir, 
+      isPromo: true, 
+      namaPromo: activePromo.namaPromo,
+      tipeDiskon: activePromo.tipeDiskon,
+      nilaiDiskon: activePromo.nilaiDiskon
     }
   }
 
@@ -107,7 +148,7 @@ export default function PosPage() {
           menuId: menu._id,
           namaMenu: menu.namaMenu,
           kategori: menu.kategori,
-          harga: menu.harga,
+          harga: menu.harga, // Simpan harga asli, diskon dikalkulasi saat render & checkout
           kuantitas: 1,
           resep: menu.resep
         }
@@ -150,7 +191,12 @@ export default function PosPage() {
     return Number(value.toString().replace(/\./g, ''))
   }
 
-  const totalHarga = cart.reduce((total, item) => total + (item.harga * item.kuantitas), 0)
+  // Kalkulasi Total Harga menggunakan harga yang sudah didiskon
+  const totalHarga = cart.reduce((total, item) => {
+    const { hargaAkhir } = getMenuPriceInfo(item.menuId, item.harga)
+    return total + (hargaAkhir * item.kuantitas)
+  }, 0)
+  
   const totalItemCount = cart.reduce((a, b) => a + b.kuantitas, 0)
   const nominalBayarAngka = parseAngka(nominalBayar)
   const kembalian = nominalBayarAngka >= totalHarga ? nominalBayarAngka - totalHarga : 0
@@ -183,10 +229,19 @@ export default function PosPage() {
     const finalNominal = paymentMethod === 'qris' ? totalHarga : nominalBayarAngka;
     const finalKembalian = paymentMethod === 'qris' ? 0 : kembalian;
 
+    // Override harga asli di keranjang dengan harga diskon agar tercatat benar di database & nota
+    const finalItems = cart.map(item => {
+      const { hargaAkhir } = getMenuPriceInfo(item.menuId, item.harga)
+      return {
+        ...item,
+        harga: hargaAkhir 
+      }
+    })
+
     const payload = {
       nomorStruk,
       namaKonsumen: namaKonsumen.trim() === '' ? 'Pelanggan Umum' : namaKonsumen,
-      items: cart,
+      items: finalItems,
       totalHarga,
       nominalBayar: finalNominal,
       kembalian: finalKembalian,
@@ -234,7 +289,7 @@ export default function PosPage() {
   return (
     <div className="relative h-full min-h-0 flex flex-col lg:grid lg:grid-cols-3 lg:gap-6 pb-20 lg:pb-0 overflow-hidden">
       
-      {/* ================= TOMBOL NAVIGASI MOBILE (Hanya tampil di HP, tersembunyi di PC) ================= */}
+      {/* ================= TOMBOL NAVIGASI MOBILE ================= */}
       <div className="lg:hidden flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-2 shrink-0 z-10 sticky top-0 shadow-sm">
         <button
           onClick={() => setActiveTabMobile('menu')}
@@ -315,6 +370,9 @@ export default function PosPage() {
               return stokTersedia < Number(item.kuantitas); 
             });
 
+            // Ambil informasi harga diskon jika ada promo
+            const { hargaAkhir, isPromo, tipeDiskon, nilaiDiskon } = getMenuPriceInfo(menu._id, menu.harga);
+
             return (
               <div
                 key={menu._id}
@@ -326,11 +384,18 @@ export default function PosPage() {
                 }`}
               >
                 <div className="w-full h-20 sm:h-24 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 overflow-hidden border border-slate-200/50 dark:border-slate-700/50 relative">
-                  {isHabis && (
+                  
+                  {/* Overlay Habis atau Badge Promo */}
+                  {isHabis ? (
                     <div className="absolute inset-0 bg-slate-900/40 z-10 flex items-center justify-center backdrop-blur-sm">
                       <span className="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
                         HABIS
                       </span>
+                    </div>
+                  ) : isPromo && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-lg z-10 shadow-sm flex items-center gap-0.5">
+                      <Tag className="w-2.5 h-2.5" />
+                      {tipeDiskon === 'Persentase' ? `Diskon ${nilaiDiskon}%` : `Diskon Rp ${nilaiDiskon.toLocaleString('id-ID')}`}
                     </div>
                   )}
 
@@ -355,10 +420,17 @@ export default function PosPage() {
                   <h4 className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
                     {menu.namaMenu}
                   </h4>
-                  <div className="flex justify-between items-center mt-1.5">
-                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                      Rp {menu.harga?.toLocaleString('id-ID')}
-                    </span>
+                  <div className="flex justify-between items-end mt-1.5">
+                    <div className="flex flex-col">
+                      {isPromo && (
+                        <span className="text-[9px] line-through text-slate-400">
+                          Rp {menu.harga?.toLocaleString('id-ID')}
+                        </span>
+                      )}
+                      <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                        Rp {hargaAkhir.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                     <span className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
                       isHabis 
                         ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' 
@@ -406,45 +478,52 @@ export default function PosPage() {
               {cart.length === 0 ? (
                 <p className="text-center text-xs text-slate-400 py-6">Keranjang kosong</p>
               ) : (
-                cart.map((item) => (
-                  <div
-                    key={item.menuId}
-                    className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50"
-                  >
-                    <div className="flex-1 pr-1">
-                      <h5 className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
-                        {item.namaMenu}
-                      </h5>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                        Rp {(item.harga * item.kuantitas).toLocaleString('id-ID')}
-                      </span>
-                    </div>
+                cart.map((item) => {
+                  const { hargaAkhir, isPromo } = getMenuPriceInfo(item.menuId, item.harga)
+                  
+                  return (
+                    <div
+                      key={item.menuId}
+                      className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50"
+                    >
+                      <div className="flex-1 pr-1">
+                        <h5 className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1 flex items-center gap-1">
+                          {item.namaMenu} 
+                          {isPromo && <Tag className="w-2.5 h-2.5 text-red-500" />}
+                        </h5>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Rp {(hargaAkhir * item.kuantitas).toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
 
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => updateQuantity(item.menuId, -1)}
-                        className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md"
-                      >
-                        <Minus className="w-2.5 h-2.5" />
-                      </button>
-                      <span className="text-xs font-bold w-4 text-center text-slate-800 dark:text-white">
-                        {item.kuantitas}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.menuId, 1)}
-                        className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md"
-                      >
-                        <Plus className="w-2.5 h-2.5" />
-                      </button>
-                      <button
-                        onClick={() => removeFromCart(item.menuId)}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded-md ml-0.5"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <button
+                          onClick={() => updateQuantity(item.menuId, -1)}
+                          className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md"
+                        >
+                          <Minus className="w-2.5 h-2.5" />
+                        </button>
+                        <span className="text-xs font-bold w-4 text-center text-slate-800 dark:text-white">
+                          {item.kuantitas}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.menuId, 1)}
+                          className="p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md"
+                        >
+                          <Plus className="w-2.5 h-2.5" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.menuId)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded-md ml-0.5"
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
 
@@ -527,7 +606,6 @@ export default function PosPage() {
               </p>
             </div>
 
-            {/* UKURAN QRIS DIPERBESAR */}
             <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-slate-300 shadow-md">
               <img 
                 src="/qr_pembayaran.jpeg" 
