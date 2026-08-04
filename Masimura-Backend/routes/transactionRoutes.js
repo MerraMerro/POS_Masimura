@@ -30,19 +30,22 @@ router.post('/', async (req, res) => {
       statusTransaksi: 'Selesai'
     });
 
-    for (const item of items) {
-      const menuData = await Menu.findById(item.menuId);
-      
-      if (menuData && menuData.resep) {
-        for (const resepItem of menuData.resep) {
-          const totalTerpakai = resepItem.kuantitas * item.kuantitas;
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        if (!item.menuId) continue;
+        const menuData = await Menu.findById(item.menuId);
+        
+        if (menuData && menuData.resep) {
+          for (const resepItem of menuData.resep) {
+            const totalTerpakai = resepItem.kuantitas * (item.kuantitas || 1);
 
-          await Stock.findByIdAndUpdate(resepItem.stockId, {
-            $inc: { 
-              stokTerpakai: totalTerpakai,
-              sisaStok: -totalTerpakai 
-            }
-          });
+            await Stock.findByIdAndUpdate(resepItem.stockId, {
+              $inc: { 
+                stokTerpakai: totalTerpakai,
+                sisaStok: -totalTerpakai 
+              }
+            });
+          }
         }
       }
     }
@@ -92,13 +95,15 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Transaksi tidak ditemukan' });
     }
 
-    if (transaction.items && transaction.items.length > 0) {
+    // Restorasi Stok Bahan Baku
+    if (transaction.items && Array.isArray(transaction.items)) {
       for (const item of transaction.items) {
+        if (!item.menuId) continue;
         const menuData = await Menu.findById(item.menuId);
         
         if (menuData && menuData.resep) {
           for (const resepItem of menuData.resep) {
-            const totalDikembalikan = resepItem.kuantitas * item.kuantitas;
+            const totalDikembalikan = resepItem.kuantitas * (item.kuantitas || 1);
 
             await Stock.findByIdAndUpdate(resepItem.stockId, {
               $inc: { 
@@ -111,9 +116,7 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    // 3. Hapus data transaksi dari database
     await Transaction.findByIdAndDelete(req.params.id);
-
     res.json({ message: 'Transaksi berhasil dihapus dan stok bahan baku telah dipulihkan!' });
 
   } catch (err) {
