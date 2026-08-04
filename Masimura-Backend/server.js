@@ -49,7 +49,7 @@ const Stock = require('./models/Stock');
 const Transaction = require('./models/Transactions');
 const Category = require('./models/Category');
 const Employee = require('./models/Employee');
-const Promo = requier('./models/Promo')
+const Promo = require('./models/Promo')
 
 // --- Import & Gunakan Routes Terpisah ---
 const stockRoutes = require('./routes/stockRoutes');
