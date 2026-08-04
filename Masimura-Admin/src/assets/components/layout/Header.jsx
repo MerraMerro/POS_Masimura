@@ -72,26 +72,6 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch, currentUser }) {
                     </div>
                 </div>
 
-                <div className='flex-1 max-w-xs sm:max-w-md mx-4'>
-                    <div className='relative'>
-                        <Search className='w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400'/>
-                        <input 
-                            type="text" 
-                            placeholder='Search...' 
-                            value={searchTerm} 
-                            onChange={handleInputChange} 
-                            className='w-full pl-9 pr-8 py-1.5 sm:py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all'
-                        />
-                        <button 
-                            onClick={handleFilterClick} 
-                            className='absolute right-1.5 top-1/2 transform -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 transition-colors rounded-lg'
-                            title="Filter Pencarian"
-                        >
-                            <Filter className="w-3.5 h-3.5" />
-                        </button>
-                    </div>
-                </div>
-
                 <div className='flex items-center space-x-2 sm:space-x-3'>
                     <button
                         type="button"
@@ -113,7 +93,6 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch, currentUser }) {
                                 <p className='text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200'>{currentUser.nama}</p>
                                 <p className='text-[10px] text-slate-500 dark:text-slate-400'>{currentUser.role}</p>
                             </div>
-                            <ChevronDown className='w-3.5 h-3.5 text-slate-400'/>
                         </div>
                     )}
                 </div>
