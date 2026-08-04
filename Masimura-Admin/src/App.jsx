@@ -73,7 +73,8 @@ export default function App() {
           onLogout={handleLogout}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+        {/* Padding dikurangi menjadi p-3 sm:p-4 agar pas dan menghilangkan space kosong */}
+        <main className="flex-1 p-3 sm:p-4 overflow-y-auto bg-slate-50 dark:bg-slate-950">
           <Routes>
             {/* Khusus Kasir */}
             {currentUser.role === 'kasir' && (

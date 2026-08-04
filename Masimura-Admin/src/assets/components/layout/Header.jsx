@@ -1,7 +1,6 @@
 import { Bell, ChevronDown, Filter, Menu, Search, Settings, Sun, Moon } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom' 
-import ProfileImg from '../../../../public/qr_pembayaran.jpeg'
 
 function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
     
@@ -44,7 +43,6 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
     }
     
     const headerInfo = getHeaderTitle()
-
     const [searchTerm, setSearchTerm] = useState('')
 
     const handleInputChange = (e) => {
@@ -60,61 +58,61 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
     }
 
     return (
-        <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4'>
+        <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-4 sm:px-6 py-2 sm:py-3 shrink-0'>
             <div className='flex items-center justify-between'>
-                <div className='flex items-center space-x-4'>
-                    <button className='p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors' onClick={onToggleSidebar}>
+                <div className='flex items-center space-x-3'>
+                    <button className='p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors' onClick={onToggleSidebar}>
                         <Menu className='w-5 h-5'/>
                     </button>
 
-                    <div className='hidden md:block'>
-                        <h1 className='text-2xl font-black text-slate-800 dark:text-white'>{headerInfo.title}</h1>
-                        <p className=' text-slate-800 dark:text-white'>{headerInfo.subtitle}</p>
+                    {/* Judul dirampingkan, subtitle disembunyikan di layar HP agar tidak terlalu tinggi */}
+                    <div>
+                        <h1 className='text-base sm:text-xl font-black text-slate-800 dark:text-white leading-tight'>{headerInfo.title}</h1>
+                        <p className='hidden sm:block text-xs text-slate-500 dark:text-slate-400'>{headerInfo.subtitle}</p>
                     </div>
                 </div>
 
-                <div className='flex-1 max-w-md mx-8'>
+                <div className='flex-1 max-w-xs sm:max-w-md mx-4'>
                     <div className='relative'>
-                        <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400'/>
+                        <Search className='w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400'/>
                         <input 
                             type="text" 
-                            placeholder='Search Anything' 
+                            placeholder='Search...' 
                             value={searchTerm} 
                             onChange={handleInputChange} 
-                            className='w-full pl-10 pr-10 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all'
+                            className='w-full pl-9 pr-8 py-1.5 sm:py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all'
                         />
-                        
                         <button 
                             onClick={handleFilterClick} 
-                            className='absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors rounded-lg'
+                            className='absolute right-1.5 top-1/2 transform -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 transition-colors rounded-lg'
                             title="Filter Pencarian"
                         >
-                            <Filter className="w-4 h-4" />
+                            <Filter className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
 
-                <div className='flex items-center space-x-3'>
+                <div className='flex items-center space-x-2 sm:space-x-3'>
                     <button
                         type="button"
                         onClick={() => setIsDarkMode(!isDarkMode)}
-                        className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title={isDarkMode ? "Ubah ke Mode Terang" : "Ubah ke Mode Gelap"}
-                        >
+                        className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title={isDarkMode ? "Mode Terang" : "Mode Gelap"}
+                    >
                         {isDarkMode ? (
-                            <Sun className="w-5 h-5 text-amber-400" />
+                            <Sun className="w-4 h-4 text-amber-400" />
                         ) : (
-                            <Moon className="w-5 h-5 text-slate-600" />
+                            <Moon className="w-4 h-4 text-slate-600" />
                         )}
                     </button>
 
-                    <div className='flex items-center space-x-3 pl-3 border-l border-slate-200 dark:border-slate-700'>
-                        <img src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' alt="User" className='w-8 h-8 rounded-full ring-2 ring-blue-500'/>
+                    <div className='flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-700'>
+                        <img src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100' alt="User" className='w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-blue-500'/>
                         <div className='hidden md:block'>
-                            <p className='text-sm font-medium text-slate-500 dark:text-slate-400'>John Doe</p>
-                            <p className='text-xs text-slate-500 dark:text-slate-400'>Admin</p>
+                            <p className='text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200'>John Doe</p>
+                            <p className='text-[10px] text-slate-500 dark:text-slate-400'>Admin</p>
                         </div>
-                        <ChevronDown className='w-4 h-4 text-slate-400'/>
+                        <ChevronDown className='w-3.5 h-3.5 text-slate-400'/>
                     </div>
                 </div>
             </div>
