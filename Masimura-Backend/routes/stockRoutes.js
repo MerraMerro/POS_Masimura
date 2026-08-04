@@ -39,6 +39,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Restock Bahan & Update Harga Modal Dinamis
 router.put('/restock/:id', async (req, res) => {
   try {
     const { jumlahMasuk, totalHargaBeli } = req.body;
@@ -62,6 +63,19 @@ router.put('/restock/:id', async (req, res) => {
     res.json(updatedStock);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// --- HAPUS BAHAN BAKU ---
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedStock = await Stock.findByIdAndDelete(req.params.id);
+    if (!deletedStock) {
+      return res.status(404).json({ message: 'Bahan baku tidak ditemukan' });
+    }
+    res.json({ message: 'Bahan baku berhasil dihapus secara permanen' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
