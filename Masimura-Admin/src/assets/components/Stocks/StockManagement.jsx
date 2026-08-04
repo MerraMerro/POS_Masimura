@@ -107,25 +107,30 @@ export default function StockManagement() {
       id: stock._id,
       namaBahan: stock.namaBahan,
       currentStok: stock.sisaStok,
-      addAmount: ''
+      jumlahMasuk: '',
+      totalHargaBeli: ''
     })
     setIsRestockModalOpen(true)
   }
 
   const handleRestockSubmit = async (e) => {
     e.preventDefault()
-    const newStok = Number(restockData.currentStok) + Number(restockData.addAmount)
     
     try {
-      const res = await fetch(`${API_URL}/api/stocks/${restockData.id}`, {
+      const res = await fetch(`${API_URL}/api/stocks/restock/${restockData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sisaStok: newStok }) // Hanya update sisa stoknya
+        body: JSON.stringify({
+          jumlahMasuk: Number(restockData.jumlahMasuk),
+          totalHargaBeli: Number(restockData.totalHargaBeli)
+        })
       })
 
       if (res.ok) {
         fetchStocks()
         setIsRestockModalOpen(false)
+      } else {
+        alert('Gagal melakukan restock')
       }
     } catch (err) {
       console.error('Gagal menambah stok:', err)
@@ -389,7 +394,7 @@ export default function StockManagement() {
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 sm:pb-3">
               <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                Restock Bahan
+                Restock Bahan & Update Harga
               </h3>
               <button onClick={() => setIsRestockModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -399,24 +404,39 @@ export default function StockManagement() {
             <form onSubmit={handleRestockSubmit} className="space-y-3 sm:space-y-4">
               <div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                  Menambah stok untuk <span className="font-bold text-slate-800 dark:text-white">{restockData.namaBahan}</span>.
+                  Pembelian stok untuk <span className="font-bold text-slate-800 dark:text-white">{restockData.namaBahan}</span>.
                 </p>
                 <p className="text-[11px] sm:text-xs text-slate-500 mt-1">
-                  Stok saat ini: <span className="font-bold">{restockData.currentStok}</span>
+                  Stok saat ini di gudang: <span className="font-bold">{restockData.currentStok}</span>
                 </p>
               </div>
 
               <div>
                 <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  Jumlah Masuk (Ditambahkan)
+                  Jumlah Stok yang Dibeli / Masuk
                 </label>
                 <input
                   type="number"
                   required
                   min="1"
-                  placeholder="Contoh: 50"
-                  value={restockData.addAmount}
-                  onChange={(e) => setRestockData({ ...restockData, addAmount: e.target.value })}
+                  placeholder="Contoh: 10"
+                  value={restockData.jumlahMasuk}
+                  onChange={(e) => setRestockData({ ...restockData, jumlahMasuk: e.target.value })}
+                  className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  Total Harga Bayar ke Supplier (Rp) <span className="text-[10px] text-blue-500 font-normal">*(Sesuaikan jika ada diskon)</span>
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  placeholder="Contoh: 45000"
+                  value={restockData.totalHargaBeli}
+                  onChange={(e) => setRestockData({ ...restockData, totalHargaBeli: e.target.value })}
                   className="w-full mt-1 p-2 sm:p-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white font-bold"
                 />
               </div>
@@ -433,7 +453,7 @@ export default function StockManagement() {
                   type="submit"
                   className="px-4 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors"
                 >
-                  Tambah Stok
+                  Simpan Restock
                 </button>
               </div>
             </form>

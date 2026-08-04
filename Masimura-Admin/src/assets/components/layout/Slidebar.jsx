@@ -48,6 +48,13 @@ const menuItems = [
         ],
     },
     {
+        id: 'promotion',
+        icon: PercentIcon,
+        label: 'Promotion',
+        path: '/promotion',
+        role: 'admin',
+    },
+    {
         id: 'transactions',
         icon: Receipt,
         label: 'Transactions',
@@ -66,13 +73,6 @@ const menuItems = [
         icon: FileText,
         label: 'Reporting',
         path: '/reporting',
-        role: 'admin',
-    },
-    {
-        id: 'promotion',
-        icon: PercentIcon,
-        label: 'Promotion',
-        path: '/promotion',
         role: 'admin',
     },
     {
