@@ -2,7 +2,7 @@ import { Bell, ChevronDown, Filter, Menu, Search, Settings, Sun, Moon } from 'lu
 import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom' 
 
-function Header({ sideBarCollapsed, onToggleSidebar, onSearch }) {
+function Header({ sideBarCollapsed, onToggleSidebar, onSearch, currentUser }) {
     
     const location = useLocation() 
 
