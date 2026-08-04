@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../models/Transactions'); 
 const Stock = require('../models/Stock');
+const Menu = require('../models/Menu');
 
 // Get Semua Transaksi (Untuk Laporan)
 router.get('/', async (req, res) => {
@@ -131,11 +132,10 @@ router.delete('/:id', async (req, res) => {
 // Bantuan untuk mengetahui jumlah hari dalam suatu bulan
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
 
-// A. EKSPOR REKAP MENU (PIVOT KE SAMPING)
+// A. EKSPOR REKAP MENU (BARIS = TANGGAL, KOLOM = MENU, DIBAGI MAKANAN & MINUMAN)
 router.get('/export/rekap-menu', async (req, res) => {
   try {
     const date = new Date();
-    // Bisa menerima parameter query ?month=8&year=2026, default ke bulan saat ini
     const month = parseInt(req.query.month) || date.getMonth() + 1;
     const year = parseInt(req.query.year) || date.getFullYear();
     const daysInMonth = getDaysInMonth(month, year);
@@ -143,14 +143,28 @@ router.get('/export/rekap-menu', async (req, res) => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    // Tarik transaksi yang hanya Selesai
+    // Tarik Transaksi
     const transactions = await Transaction.find({
       statusTransaksi: 'Selesai',
       waktuTransaksi: { $gte: startDate, $lte: endDate }
     });
 
-    // Wadah data matriks
-    const pivotData = {};
+    // Tarik Menu untuk mengetahui Kategori (Makanan atau Minuman)
+    const menus = await Menu.find();
+    const kamusKategori = {};
+    menus.forEach(m => {
+      kamusKategori[m.namaMenu] = m.kategori ? m.kategori.toLowerCase() : 'makanan';
+    });
+
+    // Siapkan wadah data matriks
+    // Struktur: dailyData[jenis][tanggal][namaMenu] = kuantitas
+    const dailyData = { makanan: {}, minuman: {} };
+    const menuSet = { makanan: new Set(), minuman: new Set() };
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      dailyData.makanan[i] = {};
+      dailyData.minuman[i] = {};
+    }
 
     transactions.forEach(trx => {
       const trxDate = new Date(trx.waktuTransaksi || trx.createdAt);
@@ -158,42 +172,72 @@ router.get('/export/rekap-menu', async (req, res) => {
 
       if (Array.isArray(trx.items)) {
         trx.items.forEach(item => {
-          const menuName = item.namaMenu.replace(/,/g, ''); // Hapus koma agar tidak merusak CSV
+          const menuName = item.namaMenu.replace(/,/g, ''); // Hapus koma
+          const kategori = kamusKategori[item.namaMenu] || 'makanan';
+          
+          // Pisahkan berdasarkan kategori (Jika ada kata 'drink' atau 'minum', masuk Minuman)
+          const isMinuman = kategori.includes('drink') || kategori.includes('minum');
+          const jenis = isMinuman ? 'minuman' : 'makanan';
 
-          // Inisialisasi baris menu jika belum ada
-          if (!pivotData[menuName]) {
-            pivotData[menuName] = { total: 0 };
-            for (let i = 1; i <= daysInMonth; i++) {
-              pivotData[menuName][i] = 0;
-            }
+          menuSet[jenis].add(menuName); // Daftarkan nama menu sebagai Kolom
+          
+          if (!dailyData[jenis][day][menuName]) {
+            dailyData[jenis][day][menuName] = 0;
           }
-
-          const qty = Number(item.kuantitas) || 1;
-          pivotData[menuName][day] += qty; // Isi qty di tanggal tersebut
-          pivotData[menuName].total += qty; // Tambah ke total ujung
+          dailyData[jenis][day][menuName] += (Number(item.kuantitas) || 1);
         });
       }
     });
 
-    // 1. Pembuatan Header Kolom (Menu, 1/7, 2/7, ..., TOTAL)
-    let csvString = `Menu,`;
-    for (let i = 1; i <= daysInMonth; i++) csvString += `${i}/${month},`;
-    csvString += `TOTAL\n`;
+    const arrMakanan = Array.from(menuSet.makanan);
+    const arrMinuman = Array.from(menuSet.minuman);
 
-    // 2. Pengisian Baris Data
-    Object.keys(pivotData).forEach(menu => {
-      let row = `${menu},`;
+    // Fungsi pembuat string tabel CSV
+    const generateTableString = (title, arrMenu, dataHarian) => {
+      // 1. Header Kolom
+      let csv = `${title}\nTanggal,`;
+      arrMenu.forEach(m => csv += `${m},`);
+      csv += `TOTAL PORSI HARIAN\n`;
+
+      let totalPerMenu = {};
+      arrMenu.forEach(m => totalPerMenu[m] = 0);
+      let grandTotal = 0;
+
+      // 2. Baris Data (Tanggal 1 s/d 31)
       for (let i = 1; i <= daysInMonth; i++) {
-        row += `${pivotData[menu][i] || 0},`; // Angka 0 jika tidak ada penjualan
+        let row = `${i}/${month},`;
+        let rowTotal = 0;
+        
+        arrMenu.forEach(m => {
+          const qty = dataHarian[i][m] || 0; // Tulis 0 jika tidak ada
+          row += `${qty},`;
+          rowTotal += qty;
+          totalPerMenu[m] += qty;
+        });
+        
+        row += `${rowTotal}\n`;
+        csv += row;
+        grandTotal += rowTotal;
       }
-      row += `${pivotData[menu].total}\n`;
-      csvString += row;
-    });
+
+      // 3. Baris Paling Bawah (TOTAL BULANAN PER MENU)
+      let lastRow = `TOTAL KESELURUHAN,`;
+      arrMenu.forEach(m => {
+         lastRow += `${totalPerMenu[m]},`;
+      });
+      lastRow += `${grandTotal}\n\n\n`; // Jarak kosong sebelum tabel berikutnya
+
+      return csv;
+    };
+
+    // Gabungkan tabel Makanan dan Minuman
+    let finalCsv = generateTableString('=== LAPORAN PENJUALAN MAKANAN ===', arrMakanan, dailyData.makanan);
+    finalCsv += generateTableString('=== LAPORAN PENJUALAN MINUMAN ===', arrMinuman, dailyData.minuman);
 
     // Kirim File ke Frontend
     res.header('Content-Type', 'text/csv');
     res.attachment(`Rekap_Menu_${month}_${year}.csv`);
-    return res.send(csvString);
+    return res.send(finalCsv);
 
   } catch (err) {
     console.error('Export Error:', err);
