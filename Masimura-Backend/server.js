@@ -59,7 +59,7 @@ const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('api/promos', promoRoutes);
+app.use('/api/promos', promoRoutes);
 app.use('/api/users', userRoutes);
 
 // --- API UPLOAD GAMBAR KE CLOUDINARY ---
