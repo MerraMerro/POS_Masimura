@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar, DollarSign, PlusCircle, Trash2, Save, FileText, CheckCircle2 } from 'lucide-react'
-import { API_URL } from '../../../config/api' // Sesuaikan path import dengan struktur folder Anda
+import { API_URL } from '../../config/api' // Sesuaikan path import dengan struktur folder Anda
 
 export default function ImportHistory() {
   const [menus, setMenus] = useState([])
