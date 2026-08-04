@@ -53,7 +53,7 @@ export default function ActivityFeed() {
             if (Array.isArray(menuData)) {
                 const sortedMenus = menuData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
                 sortedMenus.forEach(menu => {
-                    if (menu.createdAt) { // Pastikan ada field createdAt
+                    if (menu.createdAt) { 
                         feed.push({
                             id: `menu-${menu._id}`,
                             icon: Utensils,
@@ -71,7 +71,7 @@ export default function ActivityFeed() {
             if (Array.isArray(empData)) {
                 const sortedEmps = empData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
                 sortedEmps.forEach(emp => {
-                    if (emp.createdAt) { // Pastikan ada field createdAt
+                    if (emp.createdAt) { 
                         feed.push({
                             id: `emp-${emp._id}`,
                             icon: UserPlus,
@@ -116,42 +116,43 @@ export default function ActivityFeed() {
 
     return (
         <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm'>
-            <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between'>
+            <div className='p-4 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between'>
                 <div>
-                    <h3 className='text-lg font-bold text-slate-800 dark:text-white'>
+                    <h3 className='text-base sm:text-lg font-bold text-slate-800 dark:text-white'>
                         Aktivitas Sistem
                     </h3>
-                    <p className='text-sm text-slate-500 dark:text-slate-400'>
+                    <p className='text-[11px] sm:text-sm text-slate-500 dark:text-slate-400'>
                         Riwayat notifikasi terbaru
                     </p>
                 </div>
-                <button className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors'>
+                <button className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-xs sm:text-sm font-medium transition-colors'>
                     Lihat Semua
                 </button>
             </div>
             
-            <div className='p-6'>
-                <div className='space-y-4 max-h-1000 overflow-y-auto pr-2'>
+            <div className='p-4 sm:p-6'>
+                {/* max-h-[300px] untuk memastikan area bisa discroll di layar HP */}
+                <div className='space-y-3 sm:space-y-4 max-h-75 sm:max-h-100 overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700'>
                     {isLoading ? (
-                        <p className="text-center text-sm text-slate-500">Memuat aktivitas...</p>
+                        <p className="text-center text-xs sm:text-sm text-slate-500">Memuat aktivitas...</p>
                     ) : activities.length === 0 ? (
-                        <p className="text-center text-sm text-slate-500">Belum ada aktivitas tercatat.</p>
+                        <p className="text-center text-xs sm:text-sm text-slate-500">Belum ada aktivitas tercatat.</p>
                     ) : (
                         activities.map((activity) => (
-                            <div key={activity.id} className='flex items-start space-x-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors'>
-                                <div className={`p-2 rounded-lg shrink-0 ${activity.bgColor}`}>
-                                    <activity.icon className={`w-4 h-4 ${activity.color}`} />
+                            <div key={activity.id} className='flex items-start space-x-3 sm:space-x-4 p-2 sm:p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors'>
+                                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${activity.bgColor}`}>
+                                    <activity.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activity.color}`} />
                                 </div>
                                 <div className='flex-1 min-w-0'>
-                                    <h4 className='text-sm font-bold text-slate-800 dark:text-white'>
+                                    <h4 className='text-xs sm:text-sm font-bold text-slate-800 dark:text-white'>
                                         {activity.title}
                                     </h4>
-                                    <p className='text-sm text-slate-600 dark:text-slate-400 truncate mt-0.5'>
+                                    <p className='text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 truncate mt-0.5'>
                                         {activity.description}
                                     </p>
-                                    <div className='flex items-center space-x-1.5 mt-1.5'>
-                                        <Clock className='w-3 h-3 text-slate-400'/>
-                                        <span className='text-xs font-medium text-slate-500 dark:text-slate-400'>
+                                    <div className='flex items-center space-x-1.5 mt-1 sm:mt-1.5'>
+                                        <Clock className='w-2.5 h-2.5 sm:w-3 h-3 text-slate-400'/>
+                                        <span className='text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400'>
                                             {activity.time}
                                         </span>
                                     </div>

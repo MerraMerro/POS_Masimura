@@ -78,38 +78,40 @@ export default function ReportPage() {
         document.body.removeChild(link)
     }
 
-    if (isLoading) return <div className="p-8 text-center text-slate-500">Memuat data laporan keuangan...</div>
+    if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Memuat data laporan keuangan...</div>
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 pb-6">
             
             {/* Header & Filter Panel */}
-            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 shadow-sm">
                 <div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <FileText className="w-6 h-6 text-blue-500" />
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                         Laporan Laba / Rugi
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Ringkasan pendapatan penjualan dan beban operasional
                     </p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full md:w-auto">
                     {/* Filter Bulan */}
-                    <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <Calendar className="w-4 h-4 text-slate-400 ml-2" />
-                        <select 
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-                        >
-                            {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                        </select>
+                    <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto justify-between sm:justify-start">
+                        <div className="flex items-center">
+                            <Calendar className="w-4 h-4 text-slate-400 ml-1 sm:ml-2 shrink-0" />
+                            <select 
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="bg-transparent text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer ml-1 sm:ml-2"
+                            >
+                                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                            </select>
+                        </div>
                         <select 
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer border-l border-slate-300 dark:border-slate-600 pl-2"
+                            className="bg-transparent text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer border-l border-slate-300 dark:border-slate-600 pl-2 ml-2"
                         >
                             <option value="2026">2026</option>
                             <option value="2025">2025</option>
@@ -118,26 +120,26 @@ export default function ReportPage() {
 
                     <button 
                         onClick={handleDownloadReport}
-                        className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/25 transition-all text-sm font-bold w-full sm:w-auto"
+                        className="flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 py-2 sm:py-2.5 bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-500/25 transition-all text-xs sm:text-sm font-bold w-full sm:w-auto"
                     >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span>Unduh CSV</span>
                     </button>
                 </div>
             </div>
 
             {/* Kartu Ringkasan (Summary Cards) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
                 
                 {/* 1. Pendapatan */}
-                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                            <ShoppingBag className="w-6 h-6" />
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Pendapatan</p>
-                            <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+                            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Total Pendapatan</p>
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate">
                                 Rp {totalPendapatan.toLocaleString('id-ID')}
                             </h2>
                         </div>
@@ -145,14 +147,14 @@ export default function ReportPage() {
                 </div>
 
                 {/* 2. Pengeluaran (Beban Gaji) */}
-                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center">
-                            <Users className="w-6 h-6" />
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Beban Gaji Karyawan</p>
-                            <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+                            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Beban Gaji Karyawan</p>
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate">
                                 Rp {totalGaji.toLocaleString('id-ID')}
                             </h2>
                         </div>
@@ -160,20 +162,20 @@ export default function ReportPage() {
                 </div>
 
                 {/* 3. Laba Bersih */}
-                <div className={`rounded-2xl p-6 shadow-lg relative overflow-hidden text-white ${
+                <div className={`rounded-2xl p-4 sm:p-6 shadow-lg relative overflow-hidden text-white ${
                     labaBersih >= 0 
                         ? 'bg-linear-to-br from-emerald-500 to-teal-600 shadow-emerald-500/25' 
                         : 'bg-linear-to-br from-red-500 to-rose-600 shadow-red-500/25'
                 }`}>
-                    <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10" />
-                    <div className="flex items-center justify-between mb-1 relative z-10">
-                        <p className="text-sm font-medium text-white/80">Laba Bersih</p>
-                        {labaBersih >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                    <DollarSign className="absolute -right-4 -bottom-4 w-24 h-24 sm:w-32 sm:h-32 text-white/10" />
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1 relative z-10">
+                        <p className="text-[11px] sm:text-sm font-medium text-white/80">Laba Bersih</p>
+                        {labaBersih >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
                     </div>
-                    <h2 className="text-3xl font-black relative z-10">
+                    <h2 className="text-2xl sm:text-3xl font-black relative z-10 truncate">
                         Rp {labaBersih.toLocaleString('id-ID')}
                     </h2>
-                    <p className="text-xs font-medium text-white/70 mt-1 relative z-10">
+                    <p className="text-[10px] sm:text-xs font-medium text-white/70 mt-0.5 sm:mt-1 relative z-10">
                         {labaBersih >= 0 ? 'Profitabilitas Positif' : 'Mengalami Kerugian'}
                     </p>
                 </div>
@@ -181,41 +183,42 @@ export default function ReportPage() {
 
             {/* Rincian Transaksi Bulan Terpilih */}
             <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden shadow-sm">
-                <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                <div className="p-4 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                         Rincian Penjualan ({months[selectedMonth]} {selectedYear})
                     </h3>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    {/* min-w-[600px] agar tabel tidak gepeng di layar HP */}
+                    <table className="w-full min-w-150">
                         <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                             <tr>
-                                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Tanggal</th>
-                                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">ID Pesanan</th>
-                                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Konsumen</th>
-                                <th className="text-right p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">Pendapatan</th>
+                                <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Tanggal</th>
+                                <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">ID Pesanan</th>
+                                <th className="text-left p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Konsumen</th>
+                                <th className="text-right p-3 sm:p-4 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Pendapatan</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredTransactions.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="p-8 text-center text-slate-500">
+                                    <td colSpan="4" className="p-8 text-center text-xs sm:text-sm text-slate-500">
                                         Tidak ada transaksi pada bulan ini.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredTransactions.map((trx, idx) => (
-                                    <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
-                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-300">
+                                    <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="p-3 sm:p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                                             {new Date(trx.createdAt || trx.waktuTransaksi).toLocaleDateString('id-ID')}
                                         </td>
-                                        <td className="p-4 text-sm font-bold text-blue-600 dark:text-blue-400">
+                                        <td className="p-3 sm:p-4 text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
                                             {trx.nomorStruk}
                                         </td>
-                                        <td className="p-4 text-sm font-medium text-slate-800 dark:text-white">
+                                        <td className="p-3 sm:p-4 text-xs sm:text-sm font-medium text-slate-800 dark:text-white">
                                             {trx.namaKonsumen}
                                         </td>
-                                        <td className="p-4 text-sm font-bold text-emerald-600 dark:text-emerald-400 text-right">
+                                        <td className="p-3 sm:p-4 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 text-right">
                                             + Rp {trx.totalHarga?.toLocaleString('id-ID')}
                                         </td>
                                     </tr>
