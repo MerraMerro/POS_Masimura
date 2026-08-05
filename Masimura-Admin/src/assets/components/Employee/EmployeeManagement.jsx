@@ -20,7 +20,7 @@ export default function EmployeeManagement() {
     status: 'Aktif'
   })
 
-  const jabatanOptions = ['Kasir', 'Admin', 'Manajer', 'Koki Utama', 'Asisten Dapur', 'Pelayan']
+  const jabatanOptions = ['Kasir', 'Admin']
 
   useEffect(() => {
     fetchEmployees()

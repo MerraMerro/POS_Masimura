@@ -5,10 +5,11 @@ import { API_URL } from '../../../config/api'
 export default function ReportPage() {
     const [transactions, setTransactions] = useState([])
     const [employees, setEmployees] = useState([])
+    const [expenses, setExpenses] = useState([]) 
     const [isLoading, setIsLoading] = useState(true)
 
-    // Filter State (Default: Bulan dan Tahun Saat Ini)
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()) // 0 - 11
+    // Filter State
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()) 
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
     const months = [
@@ -17,13 +18,16 @@ export default function ReportPage() {
     ]
 
     useEffect(() => {
+        // Fetch 3 Data: Transaksi, Karyawan, dan Pengeluaran (Expenses)
         Promise.all([
             fetch(`${API_URL}/api/transactions`).then(res => res.json()),
-            fetch(`${API_URL}/api/employees`).then(res => res.json())
+            fetch(`${API_URL}/api/employees`).then(res => res.json()),
+            fetch(`${API_URL}/api/expenses`).then(res => res.json())
         ])
-        .then(([txData, empData]) => {
+        .then(([txData, empData, expData]) => {
             setTransactions(Array.isArray(txData) ? txData : [])
             setEmployees(Array.isArray(empData) ? empData : [])
+            setExpenses(Array.isArray(expData) ? expData : [])
             setIsLoading(false)
         })
         .catch(err => {
@@ -32,28 +36,34 @@ export default function ReportPage() {
         })
     }, [])
 
-    // --- KALKULASI DATA BERDASARKAN FILTER ---
+    // --- KALKULASI DATA BERDASARKAN FILTER (BULAN & TAHUN) ---
     
-    // 1. Filter transaksi hanya untuk bulan & tahun yang dipilih
+    // 1. Pemasukan (Transaksi)
     const filteredTransactions = transactions.filter(trx => {
         const date = new Date(trx.createdAt || trx.waktuTransaksi)
         return date.getMonth() === Number(selectedMonth) && date.getFullYear() === Number(selectedYear) && trx.statusTransaksi === 'Selesai'
     })
-
-    // 2. Total Pendapatan KOTOR (Penjualan)
     const totalPendapatan = filteredTransactions.reduce((sum, trx) => sum + (trx.totalHarga || 0), 0)
     const totalPesanan = filteredTransactions.length
 
-    // 3. Total Pengeluaran (Beban Gaji Karyawan Aktif)
+    // 2. Pengeluaran Belanja (Restock Bahan Baku)
+    const filteredExpenses = expenses.filter(exp => {
+        const date = new Date(exp.tanggal || exp.createdAt)
+        return date.getMonth() === Number(selectedMonth) && date.getFullYear() === Number(selectedYear)
+    })
+    const totalBelanjaBahan = filteredExpenses.reduce((sum, exp) => sum + (exp.nominal || 0), 0)
+
+    // 3. Pengeluaran Gaji Karyawan Aktif
     const totalGaji = employees
         .filter(emp => emp.status === 'Aktif')
         .reduce((sum, emp) => sum + (emp.gajiPokok || 0), 0)
 
-    // 4. LABA BERSIH (Pendapatan - Pengeluaran)
-    const labaBersih = totalPendapatan - totalGaji
+    // 4. TOTAL PENGELUARAN & LABA BERSIH
+    const totalPengeluaran = totalBelanjaBahan + totalGaji
+    const labaBersih = totalPendapatan - totalPengeluaran
 
 
-    // --- FUNGSI DOWNLOAD CSV KHUSUS LAPORAN LABA RUGI (LAMA) ---
+    // --- FUNGSI DOWNLOAD CSV KHUSUS LAPORAN LABA RUGI ---
     const handleDownloadReport = () => {
         let csvContent = `LAPORAN LABA RUGI MASIMURA POS\n`
         csvContent += `Periode: ${months[selectedMonth]} ${selectedYear}\n\n`
@@ -62,7 +72,9 @@ export default function ReportPage() {
         csvContent += `Total Penjualan (${totalPesanan} Pesanan),Rp ${totalPendapatan}\n\n`
         
         csvContent += `PENGELUARAN\n`
-        csvContent += `Beban Gaji Karyawan,Rp ${totalGaji}\n\n`
+        csvContent += `Beban Belanja Bahan (Restock),Rp ${totalBelanjaBahan}\n`
+        csvContent += `Beban Gaji Karyawan,Rp ${totalGaji}\n`
+        csvContent += `Total Pengeluaran,Rp ${totalPengeluaran}\n\n`
         
         csvContent += `LABA BERSIH,Rp ${labaBersih}\n`
 
@@ -81,9 +93,7 @@ export default function ReportPage() {
 
     // --- FUNGSI DOWNLOAD CSV REKAPITULASI (FORMAT KLIEN DARI BACKEND) ---
     const handleDownloadCSV = (jenis) => {
-        // Karena selectedMonth formatnya 0-11, kita tambah 1 agar sesuai dengan API backend (1-12)
         const monthApi = Number(selectedMonth) + 1;
-        // Buka URL endpoint backend beserta parameter filter bulan dan tahun
         window.open(`${API_URL}/api/transactions/export/${jenis}?month=${monthApi}&year=${selectedYear}`, '_blank');
     }
 
@@ -137,7 +147,6 @@ export default function ReportPage() {
                             <Download className="w-3.5 h-3.5" />
                             <span>Laba Rugi</span>
                         </button>
-
                         <button 
                             onClick={() => handleDownloadCSV('rekap-menu')}
                             className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap"
@@ -145,7 +154,6 @@ export default function ReportPage() {
                             <Download className="w-3.5 h-3.5" />
                             <span>Rekap Menu</span>
                         </button>
-
                         <button 
                             onClick={() => handleDownloadCSV('rekap-harian')}
                             className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap"
@@ -175,17 +183,20 @@ export default function ReportPage() {
                     </div>
                 </div>
 
-                {/* 2. Pengeluaran (Beban Gaji) */}
+                {/* 2. Total Pengeluaran */}
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-sm relative overflow-hidden">
                     <div className="flex items-center space-x-3 sm:space-x-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                             <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <div>
-                            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Beban Gaji Karyawan</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 dark:text-slate-400">Total Pengeluaran</p>
                             <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white truncate">
-                                Rp {totalGaji.toLocaleString('id-ID')}
+                                Rp {totalPengeluaran.toLocaleString('id-ID')}
                             </h2>
+                            <p className="text-[9px] sm:text-[11px] text-slate-500 mt-1 truncate">
+                                Bahan: Rp {totalBelanjaBahan.toLocaleString('id-ID')} | Gaji: Rp {totalGaji.toLocaleString('id-ID')}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -218,7 +229,6 @@ export default function ReportPage() {
                     </h3>
                 </div>
                 <div className="overflow-x-auto">
-                    {/* min-w-[600px] agar tabel tidak gepeng di layar HP */}
                     <table className="w-full min-w-150">
                         <thead className="bg-slate-50/50 dark:bg-slate-800/30">
                             <tr>

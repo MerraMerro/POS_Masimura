@@ -3,6 +3,7 @@ const router = express.Router();
 const Transaction = require('../models/Transactions'); 
 const Stock = require('../models/Stock');
 const Menu = require('../models/Menu');
+const Expense = require('../models/Expense');
 
 // Get Semua Transaksi (Untuk Laporan)
 router.get('/', async (req, res) => {
@@ -245,7 +246,7 @@ router.get('/export/rekap-menu', async (req, res) => {
   }
 });
 
-// B. EKSPOR REKAP HARIAN KEUANGAN
+// B. EKSPOR REKAP HARIAN KEUANGAN (DENGAN PENGELUARAN RIIL)
 router.get('/export/rekap-harian', async (req, res) => {
   try {
     const date = new Date();
@@ -256,45 +257,59 @@ router.get('/export/rekap-harian', async (req, res) => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
+    // 1. Tarik Pemasukan (Transaksi)
     const transactions = await Transaction.find({
       statusTransaksi: 'Selesai',
       waktuTransaksi: { $gte: startDate, $lte: endDate }
     });
 
-    // Siapkan data per tanggal
+    // 2. Tarik Pengeluaran (Belanja Restock dll)
+    const expenses = await Expense.find({
+      tanggal: { $gte: startDate, $lte: endDate }
+    });
+
+    // Siapkan wadah harian
     const dailyData = {};
     for (let i = 1; i <= daysInMonth; i++) {
-      dailyData[i] = { porsi: 0, customer: 0, pemasukan: 0 };
+      dailyData[i] = { porsi: 0, customer: 0, pemasukan: 0, pengeluaran: 0 };
     }
 
+    // Hitung Pemasukan Harian
     transactions.forEach(trx => {
       const trxDate = new Date(trx.waktuTransaksi || trx.createdAt);
       const day = trxDate.getDate();
-
       dailyData[day].customer += 1;
       dailyData[day].pemasukan += Number(trx.totalHarga) || 0;
-
       if (Array.isArray(trx.items)) {
-        trx.items.forEach(item => {
-          dailyData[day].porsi += Number(item.kuantitas) || 1;
-        });
+        trx.items.forEach(item => { dailyData[day].porsi += Number(item.kuantitas) || 1; });
       }
     });
 
-    // Pembuatan Header (Pengeluaran dibuat dummy kosong karena di sistem belum ada fitur catat pengeluaran)
-    let csvString = `Tanggal,Jumlah Porsi,Jumlah Customer,Jumlah Pemasukan,Jumlah Pengeluaran\n`;
+    // Hitung Pengeluaran Harian
+    expenses.forEach(exp => {
+      const expDate = new Date(exp.tanggal);
+      const day = expDate.getDate();
+      dailyData[day].pengeluaran += Number(exp.nominal) || 0;
+    });
+
+    // Pembuatan Header CSV
+    let csvString = `Tanggal,Jumlah Porsi,Jumlah Customer,Jumlah Pemasukan,Jumlah Pengeluaran,Pemasukan Bersih\n`;
     
-    let totPorsi = 0, totCustomer = 0, totPemasukan = 0;
+    let totPorsi = 0, totCustomer = 0, totPemasukan = 0, totPengeluaran = 0, totBersih = 0;
     
     // Pengisian Baris Data
     for (let i = 1; i <= daysInMonth; i++) {
-      csvString += `${i}/${month}/${year},${dailyData[i].porsi},${dailyData[i].customer},${dailyData[i].pemasukan},0\n`;
+      const bersihHarian = dailyData[i].pemasukan - dailyData[i].pengeluaran;
+      csvString += `="${i}/${month}/${year}",${dailyData[i].porsi},${dailyData[i].customer},${dailyData[i].pemasukan},${dailyData[i].pengeluaran},${bersihHarian}\n`;
+      
       totPorsi += dailyData[i].porsi;
       totCustomer += dailyData[i].customer;
       totPemasukan += dailyData[i].pemasukan;
+      totPengeluaran += dailyData[i].pengeluaran;
+      totBersih += bersihHarian;
     }
     
-    csvString += `TOTAL,${totPorsi},${totCustomer},${totPemasukan},0\n`;
+    csvString += `TOTAL,${totPorsi},${totCustomer},${totPemasukan},${totPengeluaran},${totBersih}\n`;
 
     res.header('Content-Type', 'text/csv');
     res.attachment(`Rekap_Harian_Keuangan_${month}_${year}.csv`);

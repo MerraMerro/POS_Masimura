@@ -56,11 +56,13 @@ const stockRoutes = require('./routes/stockRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const promoRoutes = require('./routes/promoRoutes');
 const userRoutes = require('./routes/userRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
 
 app.use('/api/stocks', stockRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // --- API UPLOAD GAMBAR KE CLOUDINARY ---
 app.post('/api/upload', upload.single('gambar'), (req, res) => {
