@@ -249,7 +249,7 @@ export default function ReportPage() {
                                 filteredTransactions.map((trx, idx) => (
                                     <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="p-3 sm:p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                                            {new Date(trx.createdAt || trx.waktuTransaksi).toLocaleDateString('id-ID')}
+                                            {new Date(trx.waktuTransaksi || trx.createdAt).toLocaleDateString('id-ID')}
                                         </td>
                                         <td className="p-3 sm:p-4 text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400">
                                             {trx.nomorStruk}

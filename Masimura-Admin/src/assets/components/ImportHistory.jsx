@@ -56,12 +56,12 @@ export default function ImportHistory() {
 
     // Format Data untuk API
     const payload = {
-      nomorStruk: `REKAP-MANUAL-${tanggal}`,
-      namaKonsumen: `Rekap Manual ${tanggal}`,
-      waktuTransaksi: `${tanggal}T23:59:59.000Z`, // Set ke penghujung hari
+      nomorStruk: `History${tanggal}`,
+      namaKonsumen: `Pelanggan Umum`,
+      waktuTransaksi: `${tanggal}T12:00:00.000Z`, // Set ke penghujung hari
       totalHarga: Number(totalHarga),
       nominalBayar: Number(totalHarga),
-      metodePembayaran: 'Tunai', // Default Tunai untuk rekap lama
+      metodePembayaran: 'Tunai', 
       items: validItems
     }
 
