@@ -19,7 +19,7 @@ import ImportHistory from './assets/components/ImportHistory'
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {

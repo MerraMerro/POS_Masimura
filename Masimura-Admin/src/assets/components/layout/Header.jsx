@@ -65,7 +65,6 @@ function Header({ sideBarCollapsed, onToggleSidebar, onSearch, currentUser }) {
                         <Menu className='w-5 h-5'/>
                     </button>
 
-                    {/* Judul dirampingkan, subtitle disembunyikan di layar HP agar tidak terlalu tinggi */}
                     <div>
                         <h1 className='text-base sm:text-xl font-black text-slate-800 dark:text-white leading-tight'>{headerInfo.title}</h1>
                         <p className='hidden sm:block text-xs text-slate-500 dark:text-slate-400'>{headerInfo.subtitle}</p>
