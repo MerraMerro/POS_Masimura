@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import LoginPage from './assets/components/Auth/LoginPage'
 import PosPage from './assets/components/POS/PosPage'
 import Dashboard from './assets/components/Dashboard/Dashboard'
@@ -19,8 +19,9 @@ import ImportHistory from './assets/components/ImportHistory'
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth <= 768)
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
@@ -33,6 +34,12 @@ export default function App() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (window.innerWidth <= 768 || location.pathname === '/pos') {
+      setSidebarCollapsed(true)
+    }
+  }, [location.pathname])
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user)
