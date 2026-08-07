@@ -360,6 +360,7 @@ router.post('/import-history', async (req, res) => {
       if (Number(data.pengeluaran) > 0) {
         expenses.push({
           namaPengeluaran: 'Rekap Pengeluaran Manual', // Nama default
+          deskripsi: 'Ini adalah Rekap Pengeluaran Manual',
           nominal: Number(data.pengeluaran),
           tanggal: pastDate,
           createdAt: pastDate,
