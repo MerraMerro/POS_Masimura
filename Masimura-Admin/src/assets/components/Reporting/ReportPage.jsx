@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Calendar, Users, ShoppingBag, RefreshCw } from 'lucide-react'
+import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Calendar, Users, ShoppingBag } from 'lucide-react'
 import { API_URL } from '../../../config/api'
 
 export default function ReportPage() {
@@ -7,7 +7,6 @@ export default function ReportPage() {
     const [employees, setEmployees] = useState([])
     const [expenses, setExpenses] = useState([]) 
     const [isLoading, setIsLoading] = useState(true)
-    const [isRefreshing, setIsRefreshing] = useState(false)
 
     // Filter State
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()) 
@@ -18,13 +17,7 @@ export default function ReportPage() {
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ]
 
-    const fetchData = (isManualRefresh = false) => {
-        if (isManualRefresh) {
-            setIsRefreshing(true)
-        } else {
-            setIsLoading(true)
-        }
-
+    useEffect(() => {
         // Fetch 3 Data: Transaksi, Karyawan, dan Pengeluaran (Expenses)
         Promise.all([
             fetch(`${API_URL}/api/transactions`).then(res => res.json()),
@@ -36,17 +29,11 @@ export default function ReportPage() {
             setEmployees(Array.isArray(empData) ? empData : [])
             setExpenses(Array.isArray(expData) ? expData : [])
             setIsLoading(false)
-            setIsRefreshing(false)
         })
         .catch(err => {
             console.error('Gagal mengambil data laporan:', err)
             setIsLoading(false)
-            setIsRefreshing(false)
         })
-    }
-
-    useEffect(() => {
-        fetchData()
     }, [])
 
     // --- KALKULASI DATA BERDASARKAN FILTER (BULAN & TAHUN) ---
@@ -128,18 +115,7 @@ export default function ReportPage() {
                 </div>
                 
                 <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full xl:w-auto">
-                    {/* Tombol Refresh */}
-                    <button 
-                        onClick={() => fetchData(true)}
-                        disabled={isRefreshing}
-                        className="flex items-center justify-center space-x-1.5 px-3.5 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold whitespace-nowrap cursor-pointer"
-                        title="Muat Ulang Data"
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        <span>Refresh</span>
-                    </button>
-
-                    {/* Filter Bulan & Tahun */}
+                    {/* Filter Bulan */}
                     <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto justify-between sm:justify-start shrink-0">
                         <div className="flex items-center">
                             <Calendar className="w-4 h-4 text-slate-400 ml-1 sm:ml-2 shrink-0" />
@@ -165,7 +141,7 @@ export default function ReportPage() {
                     <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                         <button 
                             onClick={handleDownloadReport}
-                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold whitespace-nowrap cursor-pointer"
+                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors text-xs font-bold whitespace-nowrap"
                             title="Laba Rugi"
                         >
                             <Download className="w-3.5 h-3.5" />
@@ -173,14 +149,14 @@ export default function ReportPage() {
                         </button>
                         <button 
                             onClick={() => handleDownloadCSV('rekap-menu')}
-                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap cursor-pointer"
+                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap"
                         >
                             <Download className="w-3.5 h-3.5" />
                             <span>Rekap Menu</span>
                         </button>
                         <button 
                             onClick={() => handleDownloadCSV('rekap-harian')}
-                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap cursor-pointer"
+                            className="flex-1 lg:flex-none flex items-center justify-center space-x-1.5 px-3 py-2 sm:py-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-xl transition-colors text-xs font-bold whitespace-nowrap"
                         >
                             <Download className="w-3.5 h-3.5" />
                             <span>Rekap Harian</span>
