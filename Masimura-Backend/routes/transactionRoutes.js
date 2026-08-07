@@ -321,40 +321,58 @@ router.get('/export/rekap-harian', async (req, res) => {
   }
 });
 
-// --- API KHUSUS IMPORT DATA HISTORIS  ---
+// --- API KHUSUS IMPORT DATA HISTORIS (TANPA POTONG STOK) ---
 router.post('/import-history', async (req, res) => {
   try {
     const inputData = Array.isArray(req.body) ? req.body : [req.body];
 
-    const transactions = inputData.map(data => {
+    const transactions = [];
+    const expenses = [];
+
+    inputData.forEach(data => {
       const pastDate = new Date(data.waktuTransaksi);
       
-      return {
-        nomorStruk: data.nomorStruk || `REKAP-${Date.now()}`,
-        namaKonsumen: data.namaKonsumen || 'Rekap Manual',
-        
-        items: (data.items || []).map(item => ({
-          namaMenu: item.namaMenu,
-          kuantitas: Number(item.kuantitas) || 1,
-          harga: 0,       
-          totalHarga: 0   
-        })),
-        
-        totalHarga: Number(data.totalHarga) || 0,
-        nominalBayar: Number(data.nominalBayar) || Number(data.totalHarga) || 0,
-        kembalian: Number(data.kembalian) || 0,
-        metodePembayaran: data.metodePembayaran || 'Tunai',
-        statusTransaksi: 'Selesai',
-        
-        waktuTransaksi: pastDate,
-        createdAt: pastDate, 
-        updatedAt: pastDate  
-      };
+      // 1. Masukkan ke Antrean TRANSAKSI (Pendapatan)
+      // Kita simpan transaksi jika ada totalHarga > 0 ATAU ada rincian item
+      if (Number(data.totalHarga) > 0 || (data.items && data.items.length > 0)) {
+        transactions.push({
+          nomorStruk: data.nomorStruk || `REKAP-${Date.now()}`,
+          namaKonsumen: data.namaKonsumen || 'Rekap Manual',
+          items: (data.items || []).map(item => ({
+            namaMenu: item.namaMenu,
+            kuantitas: Number(item.kuantitas) || 1,
+            harga: 0,
+            totalHarga: 0
+          })),
+          totalHarga: Number(data.totalHarga) || 0,
+          nominalBayar: Number(data.nominalBayar) || Number(data.totalHarga) || 0,
+          kembalian: Number(data.kembalian) || 0,
+          metodePembayaran: data.metodePembayaran || 'Tunai',
+          statusTransaksi: 'Selesai',
+          waktuTransaksi: pastDate,
+          createdAt: pastDate,
+          updatedAt: pastDate
+        });
+      }
+
+      // 2. Masukkan ke Antrean PENGELUARAN (Expense)
+      // Jika di frontend Anda menginputkan pengeluaran lebih dari 0
+      if (Number(data.pengeluaran) > 0) {
+        expenses.push({
+          namaPengeluaran: 'Rekap Pengeluaran Manual', // Nama default
+          nominal: Number(data.pengeluaran),
+          tanggal: pastDate,
+          createdAt: pastDate,
+          updatedAt: pastDate
+        });
+      }
     });
 
-    await Transaction.insertMany(transactions);
+    // 3. Simpan semua data sekaligus
+    if (transactions.length > 0) await Transaction.insertMany(transactions);
+    if (expenses.length > 0) await Expense.insertMany(expenses);
     
-    res.status(201).json({ message: 'Data historis berhasil disimpan secara akurat!' });
+    res.status(201).json({ message: 'Data Pemasukan & Pengeluaran historis berhasil disimpan!' });
 
   } catch (err) {
     console.error('Error import history:', err);

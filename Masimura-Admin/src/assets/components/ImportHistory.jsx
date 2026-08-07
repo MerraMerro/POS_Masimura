@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, DollarSign, PlusCircle, Trash2, Save, FileText, CheckCircle2 } from 'lucide-react'
-import { API_URL } from '../../config/api' // Sesuaikan path import dengan struktur folder Anda
+import { Calendar, DollarSign, PlusCircle, Trash2, Save, FileText, CheckCircle2, TrendingDown, Wallet } from 'lucide-react'
+import { API_URL } from '../../config/api'
 
 export default function ImportHistory() {
   const [menus, setMenus] = useState([])
@@ -9,18 +9,17 @@ export default function ImportHistory() {
 
   // Form State
   const [tanggal, setTanggal] = useState('')
-  const [totalHarga, setTotalHarga] = useState('')
+  const [totalHarga, setTotalHarga] = useState('') // Pemasukan Kotor
+  const [pengeluaran, setPengeluaran] = useState('') // Pengeluaran
   const [items, setItems] = useState([{ namaMenu: '', kuantitas: 1 }])
 
   useEffect(() => {
-    // Ambil daftar menu untuk dropdown pilihan agar tidak salah ketik
     fetch(`${API_URL}/api/menus`)
       .then(res => res.json())
       .then(data => setMenus(data))
       .catch(err => console.error('Gagal memuat menu:', err))
   }, [])
 
-  // --- LOGIKA ITEM DINAMIS ---
   const handleAddItem = () => {
     setItems([...items, { namaMenu: '', kuantitas: 1 }])
   }
@@ -36,31 +35,30 @@ export default function ImportHistory() {
     setItems(newItems)
   }
 
-  // --- LOGIKA SUBMIT (KIRIM KE BACKEND) ---
+  // KALKULASI PEMASUKAN BERSIH SECARA REALTIME
+  const pendapatan = Number(totalHarga) || 0;
+  const biayaKeluar = Number(pengeluaran) || 0;
+  const pemasukanBersih = pendapatan - biayaKeluar;
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!tanggal || !totalHarga) {
-      return alert('Tanggal dan Total Pemasukan wajib diisi!')
+    if (!tanggal) {
+      return alert('Tanggal wajib diisi!')
     }
 
-    // Filter item yang kosong agar tidak ikut terkirim
     const validItems = items.filter(item => item.namaMenu.trim() !== '' && item.kuantitas > 0)
     
-    if (validItems.length === 0) {
-      return alert('Minimal masukkan 1 menu yang terjual!')
-    }
-
     setIsProcessing(true)
     setSuccessMsg('')
 
     const payload = {
-      // Tambahkan angka acak agar nomor struk unik dan terhindar dari Duplicate Key Error
       nomorStruk: `REKAP-${tanggal.replace(/-/g, '')}-${Math.floor(Math.random() * 10000)}`,
       namaKonsumen: `Pelanggan Umum`,
       waktuTransaksi: `${tanggal}T12:00:00.000Z`, 
-      totalHarga: Number(totalHarga),
-      nominalBayar: Number(totalHarga),
+      totalHarga: pendapatan,
+      nominalBayar: pendapatan,
+      pengeluaran: biayaKeluar, // Data pengeluaran ikut dikirim ke Backend
       metodePembayaran: 'Tunai', 
       items: validItems.map(item => ({
         namaMenu: item.namaMenu,
@@ -77,11 +75,11 @@ export default function ImportHistory() {
       })
 
       if (res.ok) {
-        setSuccessMsg(`Data rekap tanggal ${tanggal} berhasil disimpan!`)
-        // Reset form untuk hari berikutnya (biarkan item 1 baris kosong)
+        setSuccessMsg(`Data rekap (Pemasukan & Pengeluaran) tgl ${tanggal} tersimpan!`)
         setTotalHarga('')
+        setPengeluaran('')
         setItems([{ namaMenu: '', kuantitas: 1 }])
-        // Majukan tanggal otomatis 1 hari agar input makin cepat
+        
         const nextDay = new Date(tanggal)
         nextDay.setDate(nextDay.getDate() + 1)
         setTanggal(nextDay.toISOString().split('T')[0])
@@ -99,14 +97,13 @@ export default function ImportHistory() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-8">
-      {/* Header */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-sm">
         <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
           <FileText className="w-6 h-6 text-purple-500" />
-          Input Rekap Historis (Manual)
+          Input Rekap Historis (Pemasukan & Pengeluaran)
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Gunakan form ini untuk memindahkan data dari buku catatan (misal: Juli 2026). Data ini <b>TIDAK AKAN</b> memotong stok gudang saat ini.
+          Input pendapatan dan pengeluaran historis Anda. Pemasukan bersih bisa menghasilkan nilai minus (rugi) jika pengeluaran lebih besar.
         </p>
       </div>
 
@@ -117,11 +114,10 @@ export default function ImportHistory() {
         </div>
       )}
 
-      {/* Form Input */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Input Tanggal */}
             <div>
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Tanggal Rekap</label>
@@ -137,24 +133,57 @@ export default function ImportHistory() {
               </div>
             </div>
 
-            {/* Input Total Harga */}
+            {/* Input Pendapatan */}
             <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Total Pendapatan Harian (Rp)</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Pendapatan (Kotor)</label>
               <div className="relative">
                 <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="number"
-                  required
-                  placeholder="Misal: 99287"
+                  placeholder="Misal: 150000"
                   value={totalHarga}
                   onChange={(e) => setTotalHarga(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
                 />
               </div>
             </div>
+
+            {/* Input Pengeluaran */}
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">Pengeluaran</label>
+              <div className="relative">
+                <TrendingDown className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-rose-500" />
+                <input
+                  type="number"
+                  placeholder="Misal: 200000"
+                  value={pengeluaran}
+                  onChange={(e) => setPengeluaran(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Section Item Menu */}
+          {/* Banner Pemasukan Bersih */}
+          <div className={`p-4 rounded-xl flex items-center justify-between border ${
+            pemasukanBersih < 0 
+              ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/30 dark:border-rose-800/50' 
+              : 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800/50'
+          }`}>
+            <div className="flex items-center gap-3">
+              <Wallet className="w-6 h-6" />
+              <div>
+                <p className="text-xs font-semibold opacity-80">
+                  {pemasukanBersih < 0 ? 'Rugi Bersih (Minus)' : 'Pemasukan Bersih (Untung)'}
+                </p>
+                <p className="text-lg font-bold">
+                  Rp {pemasukanBersih.toLocaleString('id-ID')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Item Menu (Tetap sama) */}
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
             <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
               <label className="text-sm font-bold text-slate-800 dark:text-white block">
@@ -207,7 +236,6 @@ export default function ImportHistory() {
             </div>
           </div>
 
-          {/* Tombol Submit */}
           <div className="flex justify-end pt-2">
             <button
               type="submit"
