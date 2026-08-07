@@ -54,15 +54,19 @@ export default function ImportHistory() {
     setIsProcessing(true)
     setSuccessMsg('')
 
-    // Format Data untuk API
     const payload = {
-      nomorStruk: `History${tanggal}`,
+      // Tambahkan angka acak agar nomor struk unik dan terhindar dari Duplicate Key Error
+      nomorStruk: `REKAP-${tanggal.replace(/-/g, '')}-${Math.floor(Math.random() * 10000)}`,
       namaKonsumen: `Pelanggan Umum`,
-      waktuTransaksi: `${tanggal}T12:00:00.000Z`, // Set ke penghujung hari
+      waktuTransaksi: `${tanggal}T12:00:00.000Z`, 
       totalHarga: Number(totalHarga),
       nominalBayar: Number(totalHarga),
       metodePembayaran: 'Tunai', 
-      items: validItems
+      items: validItems.map(item => ({
+        namaMenu: item.namaMenu,
+        kuantitas: Number(item.kuantitas),
+        harga: 0 
+      }))
     }
 
     try {
